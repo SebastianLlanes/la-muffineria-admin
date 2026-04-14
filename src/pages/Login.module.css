@@ -41,3 +41,13 @@
 .btn:hover {
   background-color: var(--color-primary-hover);
 }
+
+.error {
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+  background: rgba(192, 57, 43, 0.06);
+  border: 1px solid rgba(192, 57, 43, 0.2);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm);
+  text-align: center;
+}
