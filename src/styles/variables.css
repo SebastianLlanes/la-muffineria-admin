@@ -1,0 +1,60 @@
+:root {
+  /* Paleta La Muffinería */
+  --color-oliva:       #6B7C45;
+  --color-oliva-light: #8A9E5A;
+  --color-oliva-dark:  #4E5C30;
+
+  --color-rosa:        #C4897A;
+  --color-rosa-light:  #D9A898;
+  --color-rosa-dark:   #A06858;
+
+  --color-trigo:       #D4A853;
+  --color-trigo-light: #E2C07A;
+  --color-trigo-dark:  #A8813A;
+
+  --color-cacao:       #5C3D2E;
+  --color-cacao-light: #7A5241;
+  --color-cacao-dark:  #3E2820;
+
+  --color-crema:       #F5EDD6;
+  --color-crema-dark:  #E8DBC0;
+
+  /* Semánticos */
+  --color-primary:     var(--color-oliva);
+  --color-primary-hover: var(--color-oliva-dark);
+  --color-accent:      var(--color-trigo);
+  --color-danger:      #C0392B;
+  --color-success:     #27AE60;
+
+  /* Fondo y texto */
+  --color-bg:          #FDFAF4;
+  --color-bg-sidebar:  var(--color-cacao);
+  --color-surface:     #FFFFFF;
+  --color-text:        var(--color-cacao);
+  --color-text-muted:  #8A7A70;
+  --color-border:      #E2D5C3;
+
+  /* Tipografía */
+  --font-family:       'Segoe UI', system-ui, sans-serif;
+  --font-size-sm:      0.8rem;
+  --font-size-base:    0.9rem;
+  --font-size-md:      1rem;
+  --font-size-lg:      1.2rem;
+  --font-size-xl:      1.5rem;
+
+  /* Espaciado */
+  --space-xs:   4px;
+  --space-sm:   8px;
+  --space-md:   16px;
+  --space-lg:   24px;
+  --space-xl:   32px;
+
+  /* Bordes */
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  16px;
+
+  /* Sombras */
+  --shadow-sm:  0 1px 3px rgba(92, 61, 46, 0.08);
+  --shadow-md:  0 4px 12px rgba(92, 61, 46, 0.12);
+}
