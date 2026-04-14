@@ -5,7 +5,7 @@ import { auth, provider } from '../firebase/config'
 const AuthContext = createContext()
 
 const EMAILS_AUTORIZADOS = [
-  'ssebastianllanessaavedra@gmail.com',
+  'sebastianllanessaavedra@gmail.com',
   'marcelabnutricionista@gmail.com',
 ]
 
