@@ -3,14 +3,13 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAJCvg3lG4h2jZQuPoYW1KC8y9a9KDxEK0",
-  authDomain: "muffineria-admin.firebaseapp.com",
-  projectId: "muffineria-admin",
-  storageBucket: "muffineria-admin.firebasestorage.app",
-  messagingSenderId: "570083283970",
-  appId: "1:570083283970:web:fa0634abc47dd0a4ec431b",
-  measurementId: "G-J4Q99LR0PW"
-};
+  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
+}
 
 const app = initializeApp(firebaseConfig)
 
