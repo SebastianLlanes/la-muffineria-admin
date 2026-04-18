@@ -336,3 +336,88 @@
 }
 
 .emptyIcon { font-size: 2.5rem; }
+
+.hornadasPanel {
+  margin-bottom: 1.5rem;
+}
+
+.hornadasTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.hornadasSubtitle {
+  font-size: 0.85rem;
+  color: var(--color-texto-suave, #888);
+  margin-bottom: 0.75rem;
+}
+
+.hornadasGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+
+.hornadaCard {
+  border: 1px solid var(--color-borde, #ddd);
+  border-radius: 10px;
+  padding: 0.85rem;
+  background: var(--color-superficie, #fff);
+  transition: border-color 0.2s;
+}
+
+.hornadaCardActiva {
+  border-color: var(--color-primario, #7a8c5e);
+  background: var(--color-primario-suave, #f2f5ee);
+}
+
+.hornadaCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.hornadaFecha {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.hornadaBadge {
+  font-size: 0.75rem;
+  background: var(--color-borde, #eee);
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+}
+
+.hornadaRecetasBtns {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.hornadaRecetaBtn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--color-primario, #7a8c5e);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: inherit;
+  transition: background 0.15s;
+}
+
+.hornadaRecetaBtn:hover {
+  background: var(--color-primario, #7a8c5e);
+  color: #fff;
+}
+
+.hornadaRecetaDeshabilitada {
+  border-color: var(--color-borde, #ddd);
+  opacity: 0.45;
+  cursor: not-allowed;
+}

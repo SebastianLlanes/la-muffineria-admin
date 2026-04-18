@@ -1,15 +1,42 @@
 import { useState } from 'react'
 import { useRecetas } from '../../contexts/RecetasContext'
 import { useIngredientes } from '../../contexts/IngredientesContext'
+import { usePedidos } from '../../contexts/PedidosContext'
 import styles from './CalculadorPage.module.css'
 
 export default function CalculadorPage() {
   const { recetas } = useRecetas()
   const { ingredientes } = useIngredientes()
+  const { pedidos } = usePedidos()
 
   const [recetaId, setRecetaId] = useState('')
   const [cantidad, setCantidad] = useState('')
   const [precioVenta, setPrecioVenta] = useState('')
+  const [hornadaActiva, setHornadaActiva] = useState(null) // fecha de la hornada cargada
+
+  // Hornadas pendientes: misma lógica que PartidasPage
+  const ESTADOS_ACTIVOS = ['pendiente', 'en_preparacion']
+  const hornadas = pedidos
+    .filter(p => ESTADOS_ACTIVOS.includes(p.estado) && (p.fechaEntrega || p.fecha))
+    .reduce((acc, pedido) => {
+      const fecha = pedido.fecha || pedido.fechaEntrega
+      if (!acc[fecha]) acc[fecha] = { pedidos: [], recetas: {} }
+      acc[fecha].pedidos.push(pedido)
+      pedido.items?.forEach(it => {
+        acc[fecha].recetas[it.recetaNombre] = (acc[fecha].recetas[it.recetaNombre] || 0) + Number(it.cantidad)
+      })
+      return acc
+    }, {})
+  const hornadasOrdenadas = Object.entries(hornadas).sort(([a], [b]) => a.localeCompare(b))
+
+  function cargarDesdeHornada(fecha, recetaNombre, cantidadUnidades) {
+    const recetaEncontrada = recetas.find(r => r.nombre === recetaNombre)
+    if (!recetaEncontrada) return
+    setRecetaId(recetaEncontrada.id)
+    setCantidad(String(cantidadUnidades))
+    setPrecioVenta('')
+    setHornadaActiva(fecha)
+  }
 
   const receta = recetas.find(r => r.id === recetaId)
 
@@ -58,6 +85,7 @@ export default function CalculadorPage() {
     setRecetaId('')
     setCantidad('')
     setPrecioVenta('')
+    setHornadaActiva(null)
   }
 
   const listo = cantidadNum > 0 && receta
@@ -73,6 +101,53 @@ export default function CalculadorPage() {
           <button className={styles.resetBtn} onClick={reset}>Limpiar</button>
         )}
       </div>
+
+      {/* Hornadas pendientes */}
+      {hornadasOrdenadas.length > 0 && (
+        <div className={styles.hornadasPanel}>
+          <h3 className={styles.hornadasTitle}>🔥 Hornadas pendientes</h3>
+          <p className={styles.hornadasSubtitle}>
+            Cargá una receta directo desde los pedidos activos
+          </p>
+          <div className={styles.hornadasGrid}>
+            {hornadasOrdenadas.map(([fecha, data]) => {
+              const [y, m, d] = fecha.split('-')
+              const fechaLabel = `${d}/${m}/${y}`
+              const esActiva = hornadaActiva === fecha
+              return (
+                <div
+                  key={fecha}
+                  className={`${styles.hornadaCard} ${esActiva ? styles.hornadaCardActiva : ''}`}
+                >
+                  <div className={styles.hornadaCardHeader}>
+                    <span className={styles.hornadaFecha}>📅 {fechaLabel}</span>
+                    <span className={styles.hornadaBadge}>
+                      {data.pedidos.length} pedido{data.pedidos.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className={styles.hornadaRecetasBtns}>
+                    {Object.entries(data.recetas).map(([nombre, cant]) => {
+                      const recetaExiste = recetas.some(r => r.nombre === nombre)
+                      return (
+                        <button
+                          key={nombre}
+                          className={`${styles.hornadaRecetaBtn} ${!recetaExiste ? styles.hornadaRecetaDeshabilitada : ''}`}
+                          onClick={() => recetaExiste && cargarDesdeHornada(fecha, nombre, cant)}
+                          disabled={!recetaExiste}
+                          title={!recetaExiste ? 'Receta no encontrada en el sistema' : `Cargar: ${nombre} × ${cant} u.`}
+                        >
+                          <span>{nombre}</span>
+                          <strong>{cant} u.</strong>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Inputs */}
       <div className={styles.inputsCard}>

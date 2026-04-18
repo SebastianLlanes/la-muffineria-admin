@@ -145,3 +145,70 @@
   color: var(--color-text-muted);
   padding: var(--space-lg);
 }
+
+.planificador {
+  margin-bottom: 2rem;
+}
+
+.planificadorTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.planificadorSubtitle {
+  font-size: 0.85rem;
+  color: var(--color-texto-suave, #888);
+  margin-bottom: 1rem;
+}
+
+.hornadasGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.hornadaCard {
+  border: 1px solid var(--color-borde, #ddd);
+  border-radius: 10px;
+  padding: 1rem;
+  background: var(--color-superficie, #fff);
+}
+
+.hornadaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.hornadaFecha {
+  font-weight: 600;
+}
+
+.hornadaBadge {
+  font-size: 0.78rem;
+  background: var(--color-primario-suave, #f0ede6);
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+}
+
+.hornadaRecetas {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+}
+
+.hornadaRecetaRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--color-borde, #eee);
+  font-size: 0.9rem;
+}
+
+.hornadaClientes {
+  font-size: 0.8rem;
+  color: var(--color-texto-suave, #888);
+  margin: 0;
+}

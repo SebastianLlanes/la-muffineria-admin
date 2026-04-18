@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { usePartidas } from '../../contexts/PartidasContext'
+import { usePedidos } from '../../contexts/PedidosContext'
 import { eliminarPartida } from '../../firebase/partidasService'
 import PartidaForm from './components/PartidaForm'
 import styles from './PartidasPage.module.css'
@@ -10,11 +11,30 @@ function formatFecha(str) {
   return `${d}/${m}/${y}`
 }
 
+const ESTADOS_ACTIVOS = ['pendiente', 'en_preparacion']
+
 export default function PartidasPage() {
   const { partidas, loading } = usePartidas()
+  const { pedidos } = usePedidos()
   const [modalAbierto, setModalAbierto] = useState(false)
   const [itemEditar, setItemEditar] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
+
+  // Agrupar pedidos activos por fechaEntrega para planificar hornadas
+  const hornadas = pedidos
+    .filter(p => ESTADOS_ACTIVOS.includes(p.estado) && (p.fechaEntrega || p.fecha))
+    .reduce((acc, pedido) => {
+      const fecha = pedido.fecha || pedido.fechaEntrega
+      if (!acc[fecha]) acc[fecha] = { pedidos: [], recetas: {} }
+      acc[fecha].pedidos.push(pedido)
+      pedido.items?.forEach(it => {
+        const nombre = it.recetaNombre
+        acc[fecha].recetas[nombre] = (acc[fecha].recetas[nombre] || 0) + Number(it.cantidad)
+      })
+      return acc
+    }, {})
+
+  const hornadasOrdenadas = Object.entries(hornadas).sort(([a], [b]) => a.localeCompare(b))
 
   function abrirNueva() { setItemEditar(null); setModalAbierto(true) }
   function abrirEditar(item) { setItemEditar(item); setModalAbierto(true) }
@@ -36,6 +56,42 @@ export default function PartidasPage() {
         </div>
         <button className={styles.addBtn} onClick={abrirNueva}>+ Nueva partida</button>
       </div>
+
+      {/* Planificador de hornadas */}
+      {hornadasOrdenadas.length > 0 && (
+        <div className={styles.planificador}>
+          <h3 className={styles.planificadorTitle}>🔥 Hornadas pendientes</h3>
+          <p className={styles.planificadorSubtitle}>
+            Pedidos en estado <em>pendiente</em> o <em>en preparación</em>, agrupados por fecha de entrega
+          </p>
+          <div className={styles.hornadasGrid}>
+            {hornadasOrdenadas.map(([fecha, data]) => {
+              const totalUnidades = Object.values(data.recetas).reduce((a, b) => a + b, 0)
+              return (
+                <div key={fecha} className={styles.hornadaCard}>
+                  <div className={styles.hornadaHeader}>
+                    <span className={styles.hornadaFecha}>📅 {formatFecha(fecha)}</span>
+                    <span className={styles.hornadaBadge}>
+                      {data.pedidos.length} pedido{data.pedidos.length !== 1 ? 's' : ''} · {totalUnidades} u.
+                    </span>
+                  </div>
+                  <ul className={styles.hornadaRecetas}>
+                    {Object.entries(data.recetas).map(([nombre, cantidad]) => (
+                      <li key={nombre} className={styles.hornadaRecetaRow}>
+                        <span>{nombre}</span>
+                        <strong>{cantidad} u.</strong>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className={styles.hornadaClientes}>
+                    🛒 {data.pedidos.map(p => p.cliente).join(', ')}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {partidas.length === 0 ? (
         <div className={styles.empty}>

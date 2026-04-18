@@ -38,6 +38,8 @@ export default function PedidosPage() {
   const [itemEditar, setItemEditar] = useState(null)
   const [confirmId, setConfirmId] = useState(null)
   const [filtroEstado, setFiltroEstado] = useState('todos')
+  const [busquedaNombre, setBusquedaNombre] = useState('')
+  const [busquedaFecha, setBusquedaFecha] = useState('')
 
   function abrirNuevo() { setItemEditar(null); setModalAbierto(true) }
   function abrirEditar(item) { setItemEditar(item); setModalAbierto(true) }
@@ -53,9 +55,10 @@ export default function PedidosPage() {
     if (siguiente) await actualizarEstado(pedido.id, siguiente)
   }
 
-  const listado = filtroEstado === 'todos'
-    ? pedidos
-    : pedidos.filter(p => p.estado === filtroEstado)
+  const listado = pedidos
+    .filter(p => filtroEstado === 'todos' || p.estado === filtroEstado)
+    .filter(p => !busquedaNombre || p.cliente?.toLowerCase().includes(busquedaNombre.toLowerCase()))
+    .filter(p => !busquedaFecha || p.fecha === busquedaFecha || p.fechaEntrega === busquedaFecha)
 
   // Métricas del encabezado
   const totalVenta = pedidos.reduce((acc, p) => acc + (p.totalVenta || 0), 0)
@@ -92,6 +95,31 @@ export default function PedidosPage() {
           </div>
         </div>
       )}
+
+      {/* Búsqueda por nombre y fecha */}
+      <div className={styles.busqueda}>
+        <input
+          type="text"
+          className={styles.busquedaInput}
+          placeholder="Buscar por cliente..."
+          value={busquedaNombre}
+          onChange={e => setBusquedaNombre(e.target.value)}
+        />
+        <input
+          type="date"
+          className={styles.busquedaInput}
+          value={busquedaFecha}
+          onChange={e => setBusquedaFecha(e.target.value)}
+        />
+        {(busquedaNombre || busquedaFecha) && (
+          <button
+            className={styles.limpiarBtn}
+            onClick={() => { setBusquedaNombre(''); setBusquedaFecha('') }}
+          >
+            Limpiar
+          </button>
+        )}
+      </div>
 
       {/* Filtros por estado */}
       <div className={styles.filtros}>
