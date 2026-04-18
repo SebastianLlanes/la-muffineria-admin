@@ -140,12 +140,35 @@
   white-space: nowrap;
   font-weight: 500;
 }
+.estadoNuevo {
+  background-color: #e8f4fd;
+  color: #1a6fa8;
+}
 
-.estadoPendiente    { background: rgba(212,168,83,0.15);  color: var(--color-trigo-dark); }
-.estadoPreparacion  { background: rgba(92,61,46,0.1);     color: var(--color-cacao); }
-.estadoListo        { background: rgba(56,139,141,0.12);  color: #2a7a7c; }
-.estadoEntregado    { background: rgba(107,124,69,0.12);  color: var(--color-oliva-dark); }
-.estadoCobrado      { background: rgba(39,174,96,0.12);   color: var(--color-success); }
+.estadoPendiente {
+  background: rgba(212, 168, 83, 0.15);
+  color: var(--color-trigo-dark);
+}
+
+.estadoPreparacion {
+  background: rgba(92, 61, 46, 0.1);
+  color: var(--color-cacao);
+}
+
+.estadoListo {
+  background: rgba(56, 139, 141, 0.12);
+  color: #2a7a7c;
+}
+
+.estadoEntregado {
+  background: rgba(107, 124, 69, 0.12);
+  color: var(--color-oliva-dark);
+}
+
+.estadoCobrado {
+  background: rgba(39, 174, 96, 0.12);
+  color: var(--color-success);
+}
 
 /* Fechas */
 .fechas {

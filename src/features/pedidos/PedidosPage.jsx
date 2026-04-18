@@ -5,6 +5,7 @@ import PedidoForm from './components/PedidoForm'
 import styles from './PedidosPage.module.css'
 
 const ESTADOS = {
+  nuevo:           { label: 'Nuevo (web)',          color: 'estadoNuevo' },
   pendiente:       { label: 'Pendiente',           color: 'estadoPendiente' },
   en_preparacion:  { label: 'En preparación',      color: 'estadoPreparacion' },
   listo:           { label: 'Listo para entregar', color: 'estadoListo' },
@@ -13,6 +14,7 @@ const ESTADOS = {
 }
 
 const SIGUIENTE_ESTADO = {
+  nuevo:          'pendiente',
   pendiente:      'en_preparacion',
   en_preparacion: 'listo',
   listo:          'entregado',
@@ -20,16 +22,29 @@ const SIGUIENTE_ESTADO = {
 }
 
 const SIGUIENTE_LABEL = {
+  nuevo:          'Confirmar pedido',
   pendiente:      'Iniciar preparación',
   en_preparacion: 'Marcar listo',
   listo:          'Marcar entregado',
   entregado:      'Marcar cobrado',
 }
 
-function formatFecha(str) {
-  if (!str) return '—'
-  const [y, m, d] = str.split('-')
-  return `${d}/${m}/${y}`
+function formatFecha(valor) {
+  if (!valor) return '—'
+
+  // Timestamp de Firestore (pedidos de la web)
+  if (valor?.toDate) {
+    const d = valor.toDate()
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  }
+
+  // String 'YYYY-MM-DD' (pedidos cargados desde el admin)
+  if (typeof valor === 'string') {
+    const [y, m, d] = valor.split('-')
+    return `${d}/${m}/${y}`
+  }
+
+  return '—'
 }
 
 export default function PedidosPage() {
@@ -177,7 +192,9 @@ export default function PedidosPage() {
                       </a>
                     )}
                   </div>
-                  <span className={`${styles.estadoBadge} ${styles[estado.color]}`}>
+                  <span
+                    className={`${styles.estadoBadge} ${styles[estado.color]}`}
+                  >
                     {estado.label}
                   </span>
                 </div>
@@ -192,31 +209,49 @@ export default function PedidosPage() {
 
                 {/* Items */}
                 <div className={styles.items}>
-                  {pedido.items?.map((it, i) => (
-                    <div key={i} className={styles.itemRow}>
-                      <span>{it.recetaNombre}</span>
-                      <span className={styles.itemDetalle}>
-                        {it.cantidad} u. × ${parseFloat(it.precioUnitario).toFixed(2)}
-                      </span>
-                      <span className={styles.itemSubtotal}>
-                        ${(it.cantidad * it.precioUnitario).toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
+                  {pedido.items?.map((it, i) => {
+                    const nombre = it.recetaNombre || it.name || "—";
+                    const cantidad = it.cantidad || it.quantity || 0;
+                    const precio =
+                      it.precioUnitario != null
+                        ? it.precioUnitario
+                        : it.precio || 0;
+                    return (
+                      <div key={i} className={styles.itemRow}>
+                        <span>
+                          {nombre}
+                          {it.size ? ` (${it.size})` : ""}
+                        </span>
+                        <span className={styles.itemDetalle}>
+                          {cantidad} u. × ${parseFloat(precio).toFixed(2)}
+                        </span>
+                        <span className={styles.itemSubtotal}>
+                          ${(cantidad * precio).toFixed(2)}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Totales */}
                 <div className={styles.totales}>
                   <div className={styles.totalRow}>
                     <span>Total venta</span>
-                    <strong>${pedido.totalVenta?.toFixed(2)}</strong>
+                    <strong>
+                      ${(pedido.totalVenta ?? pedido.total ?? 0).toFixed(2)}
+                    </strong>
                   </div>
                   <div className={styles.totalRow}>
                     <span>Ganancia</span>
                     <strong
-                      className={pedido.totalGanancia >= 0 ? styles.positivo : styles.negativo}
+                      className={
+                        pedido.totalGanancia >= 0
+                          ? styles.positivo
+                          : styles.negativo
+                      }
                     >
-                      {pedido.totalGanancia >= 0 ? '+' : ''}${pedido.totalGanancia?.toFixed(2)}
+                      {pedido.totalGanancia >= 0 ? "+" : ""}$
+                      {pedido.totalGanancia?.toFixed(2)}
                     </strong>
                   </div>
                   <div className={styles.totalRow}>
@@ -231,7 +266,7 @@ export default function PedidosPage() {
 
                 {/* Acciones */}
                 <div className={styles.cardActions}>
-                  {siguienteLabel && pedido.estado !== 'cobrado' && (
+                  {siguienteLabel && pedido.estado !== "cobrado" && (
                     <button
                       className={styles.avanzarBtn}
                       onClick={() => handleAvanzarEstado(pedido)}
@@ -272,7 +307,7 @@ export default function PedidosPage() {
                   )}
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       )}

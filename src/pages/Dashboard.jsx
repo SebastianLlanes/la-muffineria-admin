@@ -31,10 +31,17 @@ function getLunesSemanaActual() {
   return lunes
 }
 
-function formatFecha(str) {
-  if (!str) return '—'
-  const [y, m, d] = str.split('-')
-  return `${d}/${m}/${y}`
+function formatFecha(valor) {
+  if (!valor) return '—'
+  if (valor?.toDate) {
+    const d = valor.toDate()
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  }
+  if (typeof valor === 'string') {
+    const [y, m, d] = valor.split('-')
+    return `${d}/${m}/${y}`
+  }
+  return '—'
 }
 
 export default function Dashboard() {
@@ -45,9 +52,24 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
   const lunes = getLunesSemanaActual()
-  const lunesStr = lunes.toISOString().split('T')[0]
+  const lunesStr = lunes.toISOString().split("T")[0];
 
-  const pedidosSemana = pedidos.filter(p => p.fecha >= lunesStr)
+  function toDate(valor) {
+    if (!valor) return null;
+    if (valor?.toDate) return valor.toDate();
+    if (typeof valor === "string") return new Date(valor);
+    return null;
+  }
+
+  const pedidosSemana = pedidos.filter((p) => {
+    const f = toDate(p.fecha);
+    return f && f >= lunes;
+  });
+  const partidasSemana = partidas.filter((p) => {
+    const f = toDate(p.fecha);
+    return f && f >= lunes;
+  });
+  
   const gananciasSemana = pedidosSemana.reduce((acc, p) => acc + (p.totalGanancia || 0), 0)
   const ventaSemana = pedidosSemana.reduce((acc, p) => acc + (p.totalVenta || 0), 0)
 
@@ -55,7 +77,6 @@ export default function Dashboard() {
     p.estado !== 'cobrado' && p.estado !== 'entregado'
   )
 
-  const partidasSemana = partidas.filter(p => p.fecha >= lunesStr)
   const unidadesSemana = partidasSemana.reduce((acc, p) => acc + (p.cantidadProducida || 0), 0)
 
   const ultimosPedidos = [...pedidos].slice(0, 5)
@@ -86,11 +107,15 @@ export default function Dashboard() {
           </div>
           <div className={styles.metricaCard}>
             <span className={styles.metricaLabel}>Total facturado</span>
-            <span className={styles.metricaValor}>${ventaSemana.toFixed(2)}</span>
+            <span className={styles.metricaValor}>
+              ${ventaSemana.toFixed(2)}
+            </span>
           </div>
           <div className={`${styles.metricaCard} ${styles.metricaDestacada}`}>
             <span className={styles.metricaLabel}>Ganancia</span>
-            <span className={styles.metricaValor}>${gananciasSemana.toFixed(2)}</span>
+            <span className={styles.metricaValor}>
+              ${gananciasSemana.toFixed(2)}
+            </span>
           </div>
           <div className={styles.metricaCard}>
             <span className={styles.metricaLabel}>Unidades horneadas</span>
@@ -107,7 +132,7 @@ export default function Dashboard() {
       <div className={styles.seccion}>
         <h3 className={styles.seccionTitle}>Módulos</h3>
         <div className={styles.modulosGrid}>
-          {modulos.map(m => (
+          {modulos.map((m) => (
             <button
               key={m.path}
               className={styles.moduloCard}
@@ -130,7 +155,7 @@ export default function Dashboard() {
             <h3 className={styles.seccionTitle}>Últimos pedidos</h3>
             <button
               className={styles.verTodosBtn}
-              onClick={() => navigate('/pedidos')}
+              onClick={() => navigate("/pedidos")}
             >
               Ver todos →
             </button>
@@ -147,17 +172,25 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {ultimosPedidos.map(p => (
+                {ultimosPedidos.map((p) => (
                   <tr key={p.id}>
                     <td className={styles.clienteNombre}>{p.cliente}</td>
                     <td>{formatFecha(p.fecha)}</td>
-                    <td>${p.totalVenta?.toFixed(2)}</td>
-                    <td className={p.totalGanancia >= 0 ? styles.positivo : styles.negativo}>
-                      ${p.totalGanancia?.toFixed(2)}
+                    <td>${(p.totalVenta ?? p.total ?? 0).toFixed(2)}</td>
+                    <td
+                      className={
+                        (p.totalGanancia ?? 0) >= 0
+                          ? styles.positivo
+                          : styles.negativo
+                      }
+                    >
+                      ${(p.totalGanancia ?? 0).toFixed(2)}
                     </td>
                     <td>
-                      <span className={`${styles.estadoBadge} ${styles[ESTADO_COLOR[p.estado]]}`}>
-                        {ESTADOS[p.estado]}
+                      <span
+                        className={`${styles.estadoBadge} ${styles[ESTADO_COLOR[p.estado] ?? "estadoPendiente"]}`}
+                      >
+                        {ESTADOS[p.estado] ?? "Nuevo (web)"}
                       </span>
                     </td>
                   </tr>
@@ -168,5 +201,5 @@ export default function Dashboard() {
         </div>
       )}
     </div>
-  )
+  );
 }
