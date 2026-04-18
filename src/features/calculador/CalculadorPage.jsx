@@ -17,20 +17,25 @@ export default function CalculadorPage() {
   // Hornadas pendientes: misma lógica que PartidasPage
   const ESTADOS_ACTIVOS = ['pendiente', 'en_preparacion']
   const hornadas = pedidos
-  .filter(p => ESTADOS_ACTIVOS.includes(p.estado) && (p.fechaEntrega || p.fecha))
-  .reduce((acc, pedido) => {
-    const raw = pedido.fecha || pedido.fechaEntrega
-    const fecha = raw?.toDate
-      ? raw.toDate().toISOString().split('T')[0]
-      : (raw || '')
-    if (!fecha) return acc
-    if (!acc[fecha]) acc[fecha] = { pedidos: [], recetas: {} }
-      acc[fecha].pedidos.push(pedido)
-      pedido.items?.forEach(it => {
-        acc[fecha].recetas[it.recetaNombre] = (acc[fecha].recetas[it.recetaNombre] || 0) + Number(it.cantidad)
-      })
-      return acc
-    }, {})
+    .filter(
+      (p) => ESTADOS_ACTIVOS.includes(p.estado) && (p.fechaEntrega || p.fecha),
+    )
+    .reduce((acc, pedido) => {
+      const raw = pedido.fecha || pedido.fechaEntrega;
+      const fecha = raw?.toDate
+        ? raw.toDate().toISOString().split("T")[0]
+        : raw || "";
+      if (!fecha) return acc;
+      if (!acc[fecha]) acc[fecha] = { pedidos: [], recetas: {} };
+      acc[fecha].pedidos.push(pedido);
+      pedido.items?.forEach((it) => {
+        const nombre = it.recetaNombre || it.name || "—";
+        const cantidad = Number(it.cantidad || it.quantity || 0);
+        acc[fecha].recetas[nombre] =
+          (acc[fecha].recetas[nombre] || 0) + cantidad;
+      });
+      return acc;
+    }, {});
   const hornadasOrdenadas = Object.entries(hornadas).sort(([a], [b]) => a.localeCompare(b))
 
   function cargarDesdeHornada(fecha, recetaNombre, cantidadUnidades) {

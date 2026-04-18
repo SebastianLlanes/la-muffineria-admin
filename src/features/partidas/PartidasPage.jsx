@@ -40,10 +40,10 @@ export default function PartidasPage() {
       if (!fecha) return acc;
       if (!acc[fecha]) acc[fecha] = { pedidos: [], recetas: {} };
       acc[fecha].pedidos.push(pedido);
-      pedido.items?.forEach((it) => {
-        const nombre = it.recetaNombre;
-        acc[fecha].recetas[nombre] =
-          (acc[fecha].recetas[nombre] || 0) + Number(it.cantidad);
+      pedido.items?.forEach(it => {
+  const nombre = it.recetaNombre || it.name || '—'
+  const cantidad = Number(it.cantidad || it.quantity || 0)
+  acc[fecha].recetas[nombre] = (acc[fecha].recetas[nombre] || 0) + cantidad
       });
       return acc;
     }, {});
