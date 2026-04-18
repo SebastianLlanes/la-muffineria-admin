@@ -13,6 +13,7 @@ import PartidasPage from './features/partidas/PartidasPage'
 import CalculadorPage from './features/calculador/CalculadorPage'
 import PedidosPage from './features/pedidos/PedidosPage'
 import ReportesPage from './features/reportes/ReportesPage'
+import ConfigPage from './features/config/ConfigPage'
 
 function ProtectedRoutes() {
   const { user } = useAuth()
@@ -50,6 +51,7 @@ export default function App() {
             <Route path="/calculador" element={<CalculadorPage />} />
             <Route path="/pedidos" element={<PedidosPage />} />
             <Route path="/reportes" element={<ReportesPage />} />
+            <Route path="/config" element={<ConfigPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

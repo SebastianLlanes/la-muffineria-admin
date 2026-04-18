@@ -421,3 +421,24 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+.hornadasToggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: 1.5px solid var(--color-trigo, #d4a96a);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-cacao, #3b2314);
+  margin-bottom: 0.5rem;
+  transition: background 0.2s;
+}
+
+.hornadasToggle:hover {
+  background: var(--color-crema, #fdf6ec);
+}

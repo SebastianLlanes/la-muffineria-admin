@@ -10,6 +10,7 @@ const links = [
   { to: '/calculador',   label: 'Calculador',   icon: '🧮' },
   { to: '/pedidos',      label: 'Pedidos',      icon: '📦' },
   { to: '/reportes',     label: 'Reportes',     icon: '📈' },
+  { to: '/config', label: 'Configuración', icon: '⚙️' },
 ]
 
 export default function Sidebar() {
