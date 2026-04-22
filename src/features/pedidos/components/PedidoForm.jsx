@@ -25,16 +25,46 @@ export default function PedidoForm({ item, onClose }) {
   const [error, setError] = useState('')
 
   const costosIndirectosPorUnidad = ingredientes
-    .filter(i => i.tipo === 'costo_indirecto')
-    .reduce((acc, i) => acc + i.costoUnitario, 0)
+    .filter((i) => i.tipo === "costo_indirecto")
+    .reduce((acc, i) => acc + i.costoUnitario, 0);
 
   useEffect(() => {
-    if (item) setForm(item)
-  }, [item])
+    if (item) {
+      const fechaStr = item.fecha?.toDate
+        ? item.fecha.toDate().toISOString().split("T")[0]
+        : item.fecha || hoy();
+
+      const fechaEntregaStr = item.fechaEntrega?.toDate
+        ? item.fechaEntrega.toDate().toISOString().split("T")[0]
+        : item.fechaEntrega || "";
+
+      const itemsNormalizados = (item.items || []).map((it) => {
+        // Item del admin — ya tiene la estructura correcta
+        if (it.recetaId) return it;
+
+        // Item de la web — estructura diferente, normalizamos
+        const nombre = [it.name, it.size].filter(Boolean).join(" ");
+        return {
+          recetaId: "",
+          recetaNombre: nombre,
+          cantidad: it.quantity || it.cantidad || "",
+          precioUnitario: it.precio || it.precioUnitario || "",
+          costoPorUnidad: 0,
+        };
+      });
+
+      setForm({
+        ...item,
+        fecha: fechaStr,
+        fechaEntrega: fechaEntregaStr,
+        items: itemsNormalizados,
+      });
+    }
+  }, [item]);
 
   function handleChange(e) {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   }
 
   function agregarItem() {
@@ -103,7 +133,7 @@ export default function PedidoForm({ item, onClose }) {
 
     if (!form.cliente.trim()) return setError('El nombre del cliente es obligatorio')
     if (form.items.length === 0) return setError('Agregá al menos un producto')
-    if (form.items.some(i => !i.recetaId || !i.cantidad || !i.precioUnitario))
+    if (form.items.some(i => !i.recetaNombre || !i.cantidad || !i.precioUnitario))
       return setError('Completá todos los campos de los productos')
     if (!form.fecha) return setError('Ingresá la fecha del pedido')
 

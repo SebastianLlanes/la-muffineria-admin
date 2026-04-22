@@ -47,6 +47,13 @@ function formatFecha(valor) {
   return '—'
 }
 
+function formatHora(pedido) {
+  const timestamp = pedido.creadoEn || pedido.fecha
+  if (!timestamp?.toDate) return null
+  const d = timestamp.toDate()
+  return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+}
+
 export default function PedidosPage() {
   const { pedidos, loading } = usePedidos()
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -202,6 +209,9 @@ export default function PedidosPage() {
                 {/* Fechas */}
                 <div className={styles.fechas}>
                   <span>Pedido: {formatFecha(pedido.fecha)}</span>
+                  {formatHora(pedido) && (
+                    <span>🕐 {formatHora(pedido)}</span>
+                  )}
                   {pedido.fechaEntrega && (
                     <span>Entrega: {formatFecha(pedido.fechaEntrega)}</span>
                   )}

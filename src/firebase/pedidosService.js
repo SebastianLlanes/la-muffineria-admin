@@ -1,6 +1,6 @@
 import {
   collection, addDoc, updateDoc,
-  deleteDoc, doc, onSnapshot, query, orderBy
+  deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp 
 } from 'firebase/firestore'
 import { db } from './config'
 
@@ -14,7 +14,10 @@ export function suscribirPedidos(callback) {
 }
 
 export async function agregarPedido(datos) {
-  await addDoc(collection(db, COL), datos)
+  await addDoc(collection(db, COL), {
+    ...datos,
+    creadoEn: serverTimestamp()
+  })
 }
 
 export async function editarPedido(id, datos) {
