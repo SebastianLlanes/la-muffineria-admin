@@ -8,10 +8,23 @@ const COL = 'pedidos'
 
 
 export function suscribirPedidos(callback, onError) {
-  const q = query(collection(db, COL), orderBy('creadoEn', 'desc'))
   return onSnapshot(
-    q,
-    snap => callback(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+    collection(db, COL),
+    snap => {
+      const docs = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => {
+          // Usa creadoEn si existe, sino fecha, sino 0
+          const ta = a.creadoEn?.toMillis?.()
+                  || a.fecha?.toMillis?.()
+                  || 0
+          const tb = b.creadoEn?.toMillis?.()
+                  || b.fecha?.toMillis?.()
+                  || 0
+          return tb - ta
+        })
+      callback(docs)
+    },
     onError
   )
 }

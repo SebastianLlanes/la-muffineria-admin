@@ -220,7 +220,7 @@ export default function PedidosPage() {
                 {/* Items */}
                 <div className={styles.items}>
                   {pedido.items?.map((it, i) => {
-                    const nombre = it.nombre || "—";
+                    const nombre = it.nombre || it.name || "—";
                     const cantidad = it.cantidad || it.quantity || 0;
                     const precio =
                       it.precioUnitario != null
@@ -248,23 +248,32 @@ export default function PedidosPage() {
                       ${(pedido.totalVenta ?? pedido.total ?? 0).toFixed(2)}
                     </strong>
                   </div>
-                  <div className={styles.totalRow}>
-                    <span>Ganancia</span>
-                    <strong
-                      className={
-                        pedido.totalGanancia >= 0
-                          ? styles.positivo
-                          : styles.negativo
-                      }
-                    >
-                      {pedido.totalGanancia >= 0 ? "+" : ""}$
-                      {pedido.totalGanancia?.toFixed(2)}
-                    </strong>
-                  </div>
-                  <div className={styles.totalRow}>
-                    <span>Margen</span>
-                    <strong>{pedido.margen?.toFixed(1)}%</strong>
-                  </div>
+                  {pedido.origen === 'admin' && pedido.totalCosto > 0 ? (
+                    <>
+                      <div className={styles.totalRow}>
+                        <span>Ganancia</span>
+                        <strong
+                          className={
+                            pedido.totalGanancia >= 0
+                              ? styles.positivo
+                              : styles.negativo
+                          }
+                        >
+                          {pedido.totalGanancia >= 0 ? '+' : ''}$
+                          {pedido.totalGanancia?.toFixed(2)}
+                        </strong>
+                      </div>
+                      <div className={styles.totalRow}>
+                        <span>Margen</span>
+                        <strong>{pedido.margen?.toFixed(1)}%</strong>
+                      </div>
+                    </>
+                  ) : (
+                    <div className={styles.totalRow}>
+                      <span>Ganancia / Margen</span>
+                      <strong className={styles.sinDatos}>—</strong>
+                    </div>
+                  )}
                 </div>
 
                 {pedido.notas && (
