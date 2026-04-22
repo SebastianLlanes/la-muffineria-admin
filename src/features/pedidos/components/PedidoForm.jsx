@@ -72,7 +72,7 @@ export default function PedidoForm({ item, onClose }) {
       ...prev,
       items: [
         ...prev.items,
-        { recetaId: '', recetaNombre: '', cantidad: '', precioUnitario: '', costoPorUnidad: 0 }
+        { recetaId: '', nombre: '', cantidad: '', precioUnitario: '', costoPorUnidad: 0 }
       ]
     }))
   }
@@ -86,7 +86,7 @@ export default function PedidoForm({ item, onClose }) {
         updated[index] = {
           ...updated[index],
           recetaId: receta.id,
-          recetaNombre: receta.nombre,
+          nombre: receta.nombre,
           costoPorUnidad: receta.costoPorUnidad || 0,
           precioUnitario: updated[index].precioUnitario,
           cantidad: updated[index].cantidad,
@@ -133,7 +133,7 @@ export default function PedidoForm({ item, onClose }) {
 
     if (!form.cliente.trim()) return setError('El nombre del cliente es obligatorio')
     if (form.items.length === 0) return setError('Agregá al menos un producto')
-    if (form.items.some(i => !i.recetaNombre || !i.cantidad || !i.precioUnitario))
+    if (form.items.some(i => !i.nombre || !i.cantidad || !i.precioUnitario))
       return setError('Completá todos los campos de los productos')
     if (!form.fecha) return setError('Ingresá la fecha del pedido')
 
@@ -141,14 +141,15 @@ export default function PedidoForm({ item, onClose }) {
     try {
       const datos = {
         cliente: form.cliente.trim(),
-        tipoCliente: form.tipoCliente || 'particular',
+        tipoCliente: form.tipoCliente || "particular",
         telefono: form.telefono.trim(),
         fecha: form.fecha,
         fechaEntrega: form.fechaEntrega,
-        items: form.items.map(i => ({
+        items: form.items.map((i) => ({
           ...i,
           cantidad: parseInt(i.cantidad),
           precioUnitario: parseFloat(i.precioUnitario),
+          size: i.size ?? null,
         })),
         totalVenta: totales.totalVenta,
         totalCosto: totales.totalCosto,
@@ -156,7 +157,7 @@ export default function PedidoForm({ item, onClose }) {
         margen,
         notas: form.notas.trim(),
         estado: form.estado,
-      }
+      };
       if (item) {
         await editarPedido(item.id, datos)
       } else {
