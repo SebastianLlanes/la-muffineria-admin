@@ -15,12 +15,17 @@ function reducer(state, action) {
 export function PedidosProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, { pedidos: [], loading: true })
 
-  useEffect(() => {
-    const unsub = suscribirPedidos(data =>
-      dispatch({ type: 'SET_PEDIDOS', payload: data })
-    )
-    return unsub
-  }, [])
+
+useEffect(() => {
+  const unsub = suscribirPedidos(
+    data => dispatch({ type: 'SET_PEDIDOS', payload: data }),
+    error => {
+      console.error('Error en suscribirPedidos:', error)
+      dispatch({ type: 'SET_PEDIDOS', payload: [] })
+    }
+  )
+  return unsub
+}, [])
 
   return (
     <PedidosContext.Provider value={{ ...state }}>

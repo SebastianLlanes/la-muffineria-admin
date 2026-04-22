@@ -38,20 +38,18 @@ export default function PedidoForm({ item, onClose }) {
         ? item.fechaEntrega.toDate().toISOString().split("T")[0]
         : item.fechaEntrega || "";
 
-      const itemsNormalizados = (item.items || []).map((it) => {
-        // Item del admin — ya tiene la estructura correcta
-        if (it.recetaId) return it;
-
-        // Item de la web — estructura diferente, normalizamos
-        const nombre = [it.name, it.size].filter(Boolean).join(" ");
-        return {
-          recetaId: "",
-          recetaNombre: nombre,
-          cantidad: it.quantity || it.cantidad || "",
-          precioUnitario: it.precio || it.precioUnitario || "",
-          costoPorUnidad: 0,
-        };
-      });
+      const itemsNormalizados = (item.items || []).map((it) => ({
+        recetaId: it.recetaId || "",
+        nombre:
+          it.nombre ||
+          it.recetaNombre ||
+          [it.name, it.size].filter(Boolean).join(" ") ||
+          "",
+        cantidad: it.cantidad || it.quantity || "",
+        precioUnitario: it.precioUnitario || it.precio || "",
+        costoPorUnidad: it.costoPorUnidad || 0,
+        size: it.size ?? null,
+      }));
 
       setForm({
         ...item,

@@ -6,13 +6,14 @@ import { db } from './config'
 
 const COL = 'pedidos'
 
-export function suscribirPedidos(callback) {
+
+export function suscribirPedidos(callback, onError) {
   const q = query(collection(db, COL), orderBy('creadoEn', 'desc'))
-  //                                                 ^^^^^^^^
-  //                                  antes: 'fecha' — fallaba con pedidos web
-  return onSnapshot(q, snap => {
-    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-  })
+  return onSnapshot(
+    q,
+    snap => callback(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+    onError
+  )
 }
 
 export async function agregarPedido(datos) {

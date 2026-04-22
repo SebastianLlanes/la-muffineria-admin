@@ -41,7 +41,7 @@ export default function PartidasPage() {
       if (!acc[fecha]) acc[fecha] = { pedidos: [], recetas: {} };
       acc[fecha].pedidos.push(pedido);
       pedido.items?.forEach(it => {
-  const nombre = it.recetaNombre || it.name || '—'
+  const nombre = it.nombre || '—'
   const cantidad = Number(it.cantidad || it.quantity || 0)
   acc[fecha].recetas[nombre] = (acc[fecha].recetas[nombre] || 0) + cantidad
       });

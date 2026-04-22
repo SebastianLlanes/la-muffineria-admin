@@ -220,7 +220,7 @@ export default function PedidosPage() {
                 {/* Items */}
                 <div className={styles.items}>
                   {pedido.items?.map((it, i) => {
-                    const nombre = it.recetaNombre || it.name || "—";
+                    const nombre = it.nombre || "—";
                     const cantidad = it.cantidad || it.quantity || 0;
                     const precio =
                       it.precioUnitario != null
@@ -228,10 +228,7 @@ export default function PedidosPage() {
                         : it.precio || 0;
                     return (
                       <div key={i} className={styles.itemRow}>
-                        <span>
-                          {nombre}
-                          {it.size ? ` (${it.size})` : ""}
-                        </span>
+                        <span>{nombre}</span>
                         <span className={styles.itemDetalle}>
                           {cantidad} u. × ${parseFloat(precio).toFixed(2)}
                         </span>
