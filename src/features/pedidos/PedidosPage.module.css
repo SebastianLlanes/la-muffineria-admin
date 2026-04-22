@@ -339,3 +339,31 @@
   font-size: 0.85rem;
   white-space: nowrap;
 }
+
+.sinDatos {
+  color: #999;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.calcularBtn {
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--color-verde, #6B8F4A);
+  background: transparent;
+  color: var(--color-verde, #6B8F4A);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.calcularBtn:hover {
+  background: var(--color-verde, #6B8F4A);
+  color: #fff;
+}
+
+.calcularBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

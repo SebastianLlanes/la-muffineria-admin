@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { usePedidos } from '../../contexts/PedidosContext'
-import { eliminarPedido, actualizarEstado } from '../../firebase/pedidosService'
+import { useRecetas } from '../../contexts/RecetasContext'
+import { useIngredientes } from '../../contexts/IngredientesContext'
+import { eliminarPedido, actualizarEstado, editarPedido } from '../../firebase/pedidosService'
 import PedidoForm from './components/PedidoForm'
 import styles from './PedidosPage.module.css'
 
@@ -62,6 +64,50 @@ export default function PedidosPage() {
   const [filtroEstado, setFiltroEstado] = useState('todos')
   const [busquedaNombre, setBusquedaNombre] = useState('')
   const [busquedaFecha, setBusquedaFecha] = useState('')
+
+   const { recetas } = useRecetas()
+  const { ingredientes } = useIngredientes()
+  const [calculando, setCalculando] = useState(null) // id del pedido en proceso
+
+  const costosIndirectosPorUnidad = ingredientes
+    .filter((i) => i.tipo === 'costo_indirecto')
+    .reduce((acc, i) => acc + i.costoUnitario, 0)
+
+  async function calcularCostos(pedido) {
+    setCalculando(pedido.id)
+    try {
+      const itemsActualizados = pedido.items.map((it) => {
+        const receta = recetas.find(
+          (r) => r.nombre.trim().toLowerCase() === (it.nombre || '').trim().toLowerCase()
+        )
+        return {
+          ...it,
+          recetaId:       receta?.id          ?? it.recetaId ?? '',
+          costoPorUnidad: receta?.costoPorUnidad ?? 0,
+        }
+      })
+
+      const totalVenta    = pedido.totalVenta ?? pedido.total ?? 0
+      const totalCosto    = itemsActualizados.reduce(
+        (acc, it) => acc + (it.cantidad ?? it.quantity ?? 0) * (it.costoPorUnidad + costosIndirectosPorUnidad),
+        0
+      )
+      const totalGanancia = totalVenta - totalCosto
+      const margen        = totalVenta > 0 ? (totalGanancia / totalVenta) * 100 : 0
+
+      await editarPedido(pedido.id, {
+        items:         itemsActualizados,
+        totalVenta,
+        totalCosto,
+        totalGanancia,
+        margen,
+      })
+    } catch (err) {
+      console.error('Error al calcular costos:', err)
+    } finally {
+      setCalculando(null)
+    }
+  }
 
   function abrirNuevo() { setItemEditar(null); setModalAbierto(true) }
   function abrirEditar(item) { setItemEditar(item); setModalAbierto(true) }
@@ -209,9 +255,7 @@ export default function PedidosPage() {
                 {/* Fechas */}
                 <div className={styles.fechas}>
                   <span>Pedido: {formatFecha(pedido.fecha)}</span>
-                  {formatHora(pedido) && (
-                    <span>🕐 {formatHora(pedido)}</span>
-                  )}
+                  {formatHora(pedido) && <span>🕐 {formatHora(pedido)}</span>}
                   {pedido.fechaEntrega && (
                     <span>Entrega: {formatFecha(pedido.fechaEntrega)}</span>
                   )}
@@ -248,24 +292,27 @@ export default function PedidosPage() {
                       ${(pedido.totalVenta ?? pedido.total ?? 0).toFixed(2)}
                     </strong>
                   </div>
-                  {pedido.origen === 'admin' && pedido.totalCosto > 0 ? (
+
+                  {pedido.origen === "web" && pedido.applyDiscount && (
+                    <div className={styles.totalRow}>
+                      <span>🎁 Precio especial aplicado</span>
+                      <strong className={styles.positivo}>
+                        -${(pedido.savings ?? 0).toLocaleString("es-AR")}
+                      </strong>
+                    </div>
+                  )}
+{pedido.origen === 'admin' ? (
                     <>
                       <div className={styles.totalRow}>
                         <span>Ganancia</span>
-                        <strong
-                          className={
-                            pedido.totalGanancia >= 0
-                              ? styles.positivo
-                              : styles.negativo
-                          }
-                        >
+                        <strong className={pedido.totalGanancia >= 0 ? styles.positivo : styles.negativo}>
                           {pedido.totalGanancia >= 0 ? '+' : ''}$
-                          {pedido.totalGanancia?.toFixed(2)}
+                          {(pedido.totalGanancia ?? 0).toFixed(2)}
                         </strong>
                       </div>
                       <div className={styles.totalRow}>
                         <span>Margen</span>
-                        <strong>{pedido.margen?.toFixed(1)}%</strong>
+                        <strong>{(pedido.margen ?? 0).toFixed(1)}%</strong>
                       </div>
                     </>
                   ) : (
@@ -297,6 +344,16 @@ export default function PedidosPage() {
                   >
                     Editar
                   </button>
+
+                  {pedido.origen === 'admin' && pedido.totalCosto === 0 && recetas.length > 0 && (
+                    <button
+                      className={styles.calcularBtn}
+                      onClick={() => calcularCostos(pedido)}
+                      disabled={calculando === pedido.id}
+                    >
+                      {calculando === pedido.id ? "Calculando..." : "🧮 Calcular costos"}
+                    </button>
+                  )}
 
                   {confirmId === pedido.id ? (
                     <>
