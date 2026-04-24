@@ -5,7 +5,7 @@ import styles from './ConfigPage.module.css'
 const CAMPOS = [
   { key: 'precioNormalGrande',     label: 'Precio normal grande (160g)',      group: 'Muffin Grande' },
   { key: 'precioDescuentoGrande',  label: 'Precio con descuento grande',       group: 'Muffin Grande' },
-  { key: 'precioNormalMediano',    label: 'Precio normal mediano (90g)',       group: 'Muffin Mediano' },
+  { key: 'precioNormalMediano',    label: 'Precio normal mediano (100g)',       group: 'Muffin Mediano' },
   { key: 'precioDescuentoMediano', label: 'Precio con descuento mediano',      group: 'Muffin Mediano' },
   { key: 'umbralDescuento',        label: 'Unidades mínimas para descuento',  group: 'Descuento' },
 ]

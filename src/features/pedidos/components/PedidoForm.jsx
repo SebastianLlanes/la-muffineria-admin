@@ -88,15 +88,30 @@ export default function PedidoForm({ item, onClose }) {
     if (field === 'recetaId') {
       const receta = recetas.find(r => r.id === value)
       if (receta) {
+        const size = updated[index].size || 'grande'
         updated[index] = {
           ...updated[index],
           recetaId: receta.id,
           nombre: receta.nombre,
-          costoPorUnidad: receta.costoPorUnidad || 0,
+          costoPorUnidad: size === 'mediano' && receta.costoPorUnidadMediano != null
+            ? receta.costoPorUnidadMediano
+            : receta.costoPorUnidad || 0,
           precioUnitario: updated[index].precioUnitario,
           cantidad: updated[index].cantidad,
-          size: updated[index].size || 'grande',
+          size,
         }
+      }
+    } else if (field === 'size') {
+      // Al cambiar size, recalcular costoPorUnidad desde la receta
+      const receta = recetas.find(r => r.id === updated[index].recetaId)
+      updated[index] = {
+        ...updated[index],
+        size: value,
+        costoPorUnidad: receta
+          ? (value === 'mediano' && receta.costoPorUnidadMediano != null
+              ? receta.costoPorUnidadMediano
+              : receta.costoPorUnidad || 0)
+          : updated[index].costoPorUnidad,
       }
     } else {
       updated[index] = { ...updated[index], [field]: value }
@@ -283,7 +298,7 @@ export default function PedidoForm({ item, onClose }) {
                   }
                 >
                   <option value="grande">Grande (160g)</option>
-                  <option value="mediano">Mediano (90g)</option>
+                  <option value="mediano">Mediano (0g)</option>
                 </select>
 
                 <input

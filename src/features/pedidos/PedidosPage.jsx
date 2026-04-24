@@ -110,10 +110,14 @@ export default function PedidosPage() {
           const receta = recetas.find(
             (r) => tokenizarNombre(r.nombre) === tokenItem
           )
+          // Elegir costo según size: mediano si corresponde, grande por default
+          const costoReceta = it.size === 'mediano' && receta?.costoPorUnidadMediano != null
+            ? receta.costoPorUnidadMediano
+            : receta?.costoPorUnidad ?? 0
           return {
             ...it,
             recetaId: receta?.id ?? it.recetaId ?? '',
-            costoPorUnidad: receta?.costoPorUnidad ?? 0,
+            costoPorUnidad: costoReceta,
           }
         })
 
@@ -166,10 +170,14 @@ export default function PedidosPage() {
         const receta = recetas.find(
           (r) => r.nombre.trim().toLowerCase() === (it.nombre || '').trim().toLowerCase()
         )
+        // Elegir costo según size: mediano si corresponde, grande por default
+        const costoReceta = it.size === 'mediano' && receta?.costoPorUnidadMediano != null
+          ? receta.costoPorUnidadMediano
+          : receta?.costoPorUnidad ?? 0
         return {
           ...it,
           recetaId:       receta?.id          ?? it.recetaId ?? '',
-          costoPorUnidad: receta?.costoPorUnidad ?? 0,
+          costoPorUnidad: costoReceta,
         }
       })
 

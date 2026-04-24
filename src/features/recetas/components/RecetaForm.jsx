@@ -7,6 +7,8 @@ const vacía = {
   nombre: '',
   descripcion: '',
   rendimiento: '',
+  gramosGrande: 160,
+  gramosMediano: 100,
   ingredientes: [],
 }
 
@@ -80,6 +82,13 @@ export default function RecetaForm({ item, onClose }) {
   const costoTotal = costoIngredientes + costoIndirectoTotal
   const costoPorUnidad = rendimiento > 0 ? costoTotal / rendimiento : 0
 
+  // Costo mediano derivado por proporción de gramaje.
+  // Ej: mediano 90g = grande 160g × (90/160) = 56.25% del costo del grande
+  const gramosGrande = parseInt(form.gramosGrande) || 160
+  const gramosMediano = parseInt(form.gramosMediano) || 100
+  const factorMediano = gramosGrande > 0 ? gramosMediano / gramosGrande : 0
+  const costoPorUnidadMediano = costoPorUnidad * factorMediano
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
@@ -98,6 +107,8 @@ export default function RecetaForm({ item, onClose }) {
         nombre: form.nombre.trim(),
         descripcion: form.descripcion.trim(),
         rendimiento: parseInt(form.rendimiento),
+        gramosGrande,
+        gramosMediano,
         ingredientes: form.ingredientes.map(i => ({
           ...i,
           cantidad: parseFloat(i.cantidad),
@@ -106,6 +117,7 @@ export default function RecetaForm({ item, onClose }) {
         costoIndirectoTotal,
         costoTotal,
         costoPorUnidad,
+        costoPorUnidadMediano,
       }
       if (item) {
         await editarReceta(item.id, datos)
@@ -142,7 +154,7 @@ export default function RecetaForm({ item, onClose }) {
               />
             </div>
             <div className={styles.fieldSmall}>
-              <label className={styles.label}>Rinde (unidades)</label>
+              <label className={styles.label}>Rinde (unidades grandes)</label>
               <input
                 className={styles.input}
                 name="rendimiento"
@@ -151,6 +163,43 @@ export default function RecetaForm({ item, onClose }) {
                 value={form.rendimiento}
                 onChange={handleChange}
                 placeholder="12"
+              />
+            </div>
+          </div>
+
+          <div className={styles.row}>
+            <div className={styles.fieldSmall}>
+              <label className={styles.label}>Gramos grande</label>
+              <input
+                className={styles.input}
+                name="gramosGrande"
+                type="number"
+                min="1"
+                value={form.gramosGrande}
+                onChange={handleChange}
+                placeholder="160"
+              />
+            </div>
+            <div className={styles.fieldSmall}>
+              <label className={styles.label}>Gramos mediano</label>
+              <input
+                className={styles.input}
+                name="gramosMediano"
+                type="number"
+                min="1"
+                value={form.gramosMediano}
+                onChange={handleChange}
+                placeholder="90"
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>Factor mediano</label>
+              <input
+                className={styles.input}
+                type="text"
+                value={`${(factorMediano * 100).toFixed(1)}% del grande`}
+                readOnly
+                disabled
               />
             </div>
           </div>
@@ -237,8 +286,12 @@ export default function RecetaForm({ item, onClose }) {
                 <strong>${costoTotal.toFixed(2)}</strong>
               </div>
               <div className={`${styles.resumenRow} ${styles.resumenDestacado}`}>
-                <span>Costo por unidad</span>
+                <span>Costo por unidad (grande, {gramosGrande}g)</span>
                 <strong>${costoPorUnidad.toFixed(2)}</strong>
+              </div>
+              <div className={styles.resumenRow}>
+                <span>Costo por unidad (mediano, {gramosMediano}g)</span>
+                <strong>${costoPorUnidadMediano.toFixed(2)}</strong>
               </div>
             </div>
           )}

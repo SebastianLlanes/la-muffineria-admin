@@ -65,9 +65,15 @@ export default function RecetasPage() {
                   <span>${receta.costoTotal?.toFixed(2)}</span>
                 </div>
                 <div className={`${styles.costoRow} ${styles.costoDestacado}`}>
-                  <span>Por unidad</span>
+                  <span>Grande ({receta.gramosGrande ?? 160}g)</span>
                   <strong>${receta.costoPorUnidad?.toFixed(2)}</strong>
                 </div>
+                {receta.costoPorUnidadMediano != null && (
+                  <div className={styles.costoRow}>
+                    <span>Mediano ({receta.gramosMediano ?? 100}g)</span>
+                    <strong>${receta.costoPorUnidadMediano.toFixed(2)}</strong>
+                  </div>
+                )}
               </div>
 
               <div className={styles.cardActions}>
