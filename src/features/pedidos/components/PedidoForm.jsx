@@ -66,17 +66,24 @@ export default function PedidoForm({ item, onClose }) {
   }
 
   function agregarItem() {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       items: [
         ...prev.items,
-        { recetaId: '', nombre: '', cantidad: '', precioUnitario: '', costoPorUnidad: 0 }
-      ]
-    }))
+        {
+          recetaId: "",
+          nombre: "",
+          cantidad: "",
+          precioUnitario: "",
+          costoPorUnidad: 0,
+          size: "grande",
+        },
+      ],
+    }));
   }
 
   function handleItemChange(index, field, value) {
-    const updated = [...form.items]
+    const updated = [...form.items];
 
     if (field === 'recetaId') {
       const receta = recetas.find(r => r.id === value)
@@ -88,13 +95,14 @@ export default function PedidoForm({ item, onClose }) {
           costoPorUnidad: receta.costoPorUnidad || 0,
           precioUnitario: updated[index].precioUnitario,
           cantidad: updated[index].cantidad,
+          size: updated[index].size || 'grande',
         }
       }
     } else {
       updated[index] = { ...updated[index], [field]: value }
     }
 
-    setForm(prev => ({ ...prev, items: updated }))
+    setForm((prev) => ({ ...prev, items: updated }));
   }
 
   function quitarItem(index) {
@@ -147,7 +155,7 @@ export default function PedidoForm({ item, onClose }) {
           ...i,
           cantidad: parseInt(i.cantidad),
           precioUnitario: parseFloat(i.precioUnitario),
-          size: i.size ?? null,
+          size: i.size || 'grande',
         })),
         totalVenta: totales.totalVenta,
         totalCosto: totales.totalCosto,
@@ -265,6 +273,17 @@ export default function PedidoForm({ item, onClose }) {
                       {r.nombre}
                     </option>
                   ))}
+                </select>
+
+                <select
+                  className={styles.itemSelectSize}
+                  value={it.size || 'grande'}
+                  onChange={(e) =>
+                    handleItemChange(index, "size", e.target.value)
+                  }
+                >
+                  <option value="grande">Grande (160g)</option>
+                  <option value="mediano">Mediano (90g)</option>
                 </select>
 
                 <input

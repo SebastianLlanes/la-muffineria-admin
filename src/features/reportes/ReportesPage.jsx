@@ -7,6 +7,28 @@ import { usePedidos } from '../../contexts/PedidosContext'
 import { usePartidas } from '../../contexts/PartidasContext'
 import styles from './ReportesPage.module.css'
 
+function fechaAString(valor) {
+  if (!valor) return ''
+  if (valor?.toDate) return valor.toDate().toISOString().split('T')[0]
+  if (typeof valor === 'string') return valor
+  return ''
+}
+
+function extraerSabor(nombre) {
+  return (nombre || '').replace(/\s*\([^)]*\)\s*$/, '').trim()
+}
+
+function tokenizarSabor(nombre) {
+  return (nombre || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[&/,]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w && w !== 'y' && w !== 'con')
+    .sort()
+    .join(' ')
+}
+
 function getLunesSemana(fecha) {
   const d = new Date(fecha + 'T00:00:00')
   const dia = d.getDay()
@@ -54,20 +76,24 @@ const TOOLTIP_STYLE = {
 
 export default function ReportesPage() {
   const { pedidos } = usePedidos()
-  const { partidas } = usePartidas()
-  const [periodo, setPeriodo] = useState('mes')
+  const { partidas } = usePartidas();
+  const [periodo, setPeriodo] = useState("mes");
 
-  const { inicio, fin } = getInicioFin(periodo)
+  const { inicio, fin } = getInicioFin(periodo);
 
-  const pedidosFiltrados = useMemo(() =>
-    pedidos.filter(p => p.fecha >= inicio && p.fecha <= fin),
-    [pedidos, inicio, fin]
-  )
+  const pedidosFiltrados = useMemo(
+    () =>
+      pedidos.filter((p) => {
+        const f = fechaAString(p.fecha);
+        return f && f >= inicio && f <= fin;
+      }),
+    [pedidos, inicio, fin],
+  );
 
-  const partidasFiltradas = useMemo(() =>
-    partidas.filter(p => p.fecha >= inicio && p.fecha <= fin),
-    [partidas, inicio, fin]
-  )
+  const partidasFiltradas = useMemo(
+    () => partidas.filter((p) => p.fecha >= inicio && p.fecha <= fin),
+    [partidas, inicio, fin],
+  );
 
   // Métricas generales
   const totalVenta = pedidosFiltrados.reduce((a, p) => a + (p.totalVenta || 0), 0)
@@ -92,25 +118,60 @@ export default function ReportesPage() {
 
   // Ganancia por semana
   const gananciaPorSemana = useMemo(() => {
+    const mapa = {};
+    pedidosFiltrados.forEach((p) => {
+      const fechaStr = fechaAString(p.fecha);
+      if (!fechaStr) return;
+      const lunes = getLunesSemana(fechaStr);
+      if (!mapa[lunes])
+        mapa[lunes] = { semana: semanaLabel(lunes), ganancia: 0, venta: 0 };
+      mapa[lunes].ganancia += p.totalGanancia || 0;
+      mapa[lunes].venta += p.totalVenta || 0;
+    });
+    return Object.values(mapa).sort((a, b) => a.semana.localeCompare(b.semana));
+  }, [pedidosFiltrados]);
+
+// Productos más vendidos — agregado por sabor (suma todas las presentaciones)
+  const productosPorSabor = useMemo(() => {
     const mapa = {}
     pedidosFiltrados.forEach(p => {
-      const lunes = getLunesSemana(p.fecha)
-      if (!mapa[lunes]) mapa[lunes] = { semana: semanaLabel(lunes), ganancia: 0, venta: 0 }
-      mapa[lunes].ganancia += p.totalGanancia || 0
-      mapa[lunes].venta += p.totalVenta || 0
+      p.items?.forEach(it => {
+        const raw = it.nombre || it.name || 'Sin nombre'
+        const sabor = extraerSabor(raw) || 'Sin nombre'
+        const cantidad = it.cantidad || it.quantity || 0
+        const precio = it.precioUnitario || it.precio || 0
+        if (!mapa[sabor]) mapa[sabor] = { nombre: sabor, unidades: 0, venta: 0 }
+        mapa[sabor].unidades += cantidad
+        mapa[sabor].venta += cantidad * precio
+      })
     })
-    return Object.values(mapa).sort((a, b) => a.semana.localeCompare(b.semana))
+    return Object.values(mapa)
+      .sort((a, b) => b.unidades - a.unidades)
+      .slice(0, 6)
   }, [pedidosFiltrados])
 
-  // Productos más vendidos
+ // Productos más vendidos — discriminado por presentación (sabor + size)
+  // Usa it.size como fuente de verdad, normaliza variantes de escritura del
+  // sabor, y agrupa pedidos admin sin size bajo "sin especificar".
   const productosMasVendidos = useMemo(() => {
     const mapa = {}
     pedidosFiltrados.forEach(p => {
       p.items?.forEach(it => {
-        const nombre = it.recetaNombre || 'Sin nombre'
-        if (!mapa[nombre]) mapa[nombre] = { nombre, unidades: 0, venta: 0 }
-        mapa[nombre].unidades += it.cantidad || 0
-        mapa[nombre].venta += (it.cantidad || 0) * (it.precioUnitario || 0)
+        const raw = it.nombre || it.name || 'Sin nombre'
+        const sabor = extraerSabor(raw) || 'Sin nombre'
+        const size = it.size || 'sin especificar'
+        const key = `${tokenizarSabor(sabor) || sabor}__${size}`
+        const nombreDisplay = `${sabor} (${size})`
+        const cantidad = it.cantidad || it.quantity || 0
+        const precio = it.precioUnitario || it.precio || 0
+        if (!mapa[key]) {
+          mapa[key] = { nombre: nombreDisplay, unidades: 0, venta: 0 }
+        } else if (sabor.includes(' y ') && mapa[key].nombre.includes(' & ')) {
+          // Preferir la versión con 'y' (admin, más legible)
+          mapa[key].nombre = `${sabor} (${size})`
+        }
+        mapa[key].unidades += cantidad
+        mapa[key].venta += cantidad * precio
       })
     })
     return Object.values(mapa)
@@ -296,10 +357,52 @@ export default function ReportesPage() {
             </div>
           )}
 
-          {/* Productos más vendidos */}
+{/* Productos más vendidos — agregado por sabor */}
+          {productosPorSabor.length > 0 && (
+            <div className={styles.seccion}>
+              <h3 className={styles.seccionTitle}>Productos más vendidos por sabor</h3>
+              <div className={styles.chartCard}>
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart
+                    layout="vertical"
+                    data={productosPorSabor}
+                    margin={{ top: 0, right: 40, left: 20, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E2D5C3" horizontal={false} />
+                    <XAxis
+                      type="number"
+                      tick={{ fontSize: 12, fill: '#8A7A70' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="nombre"
+                      tick={{ fontSize: 12, fill: '#5C3D2E' }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={130}
+                    />
+                    <Tooltip
+                      contentStyle={TOOLTIP_STYLE}
+                      formatter={(value) => [value + ' unidades']}
+                    />
+                    <Bar
+                      dataKey="unidades"
+                      name="Unidades vendidas"
+                      fill="#6B7C45"
+                      radius={[0, 4, 4, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Productos más vendidos — por presentación (grande / mediano) */}
           {productosMasVendidos.length > 0 && (
             <div className={styles.seccion}>
-              <h3 className={styles.seccionTitle}>Productos más vendidos</h3>
+              <h3 className={styles.seccionTitle}>Productos más vendidos por presentación</h3>
               <div className={styles.chartCard}>
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart

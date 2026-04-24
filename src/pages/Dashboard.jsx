@@ -1,3 +1,8 @@
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer
+} from 'recharts'
+import { useMemo } from 'react'
 import { usePedidos } from '../contexts/PedidosContext'
 import { usePartidas } from '../contexts/PartidasContext'
 import { useRecetas } from '../contexts/RecetasContext'
@@ -71,15 +76,71 @@ export default function Dashboard() {
   });
   
   const gananciasSemana = pedidosSemana.reduce((acc, p) => acc + (p.totalGanancia || 0), 0)
-  const ventaSemana = pedidosSemana.reduce((acc, p) => acc + (p.totalVenta || 0), 0)
+  const ventaSemana = pedidosSemana.reduce(
+    (acc, p) => acc + (p.totalVenta || 0),
+    0,
+  );
 
-  const pedidosActivos = pedidos.filter(p =>
-    p.estado !== 'cobrado' && p.estado !== 'entregado'
-  )
+  const pedidosActivos = pedidos.filter(
+    (p) => p.estado !== "cobrado" && p.estado !== "entregado",
+  );
+
+  // Pedidos web recién llegados del e-commerce que requieren tu confirmación
+  const pedidosWebSinAtender = pedidos.filter(
+    (p) => p.origen === "web" && p.estado === "nuevo",
+  );
 
   const unidadesSemana = partidasSemana.reduce((acc, p) => acc + (p.cantidadProducida || 0), 0)
 
-  const ultimosPedidos = [...pedidos].slice(0, 5)
+  // Tendencia de las últimas 8 semanas: venta y ganancia por semana
+  const tendenciaSemanal = useMemo(() => {
+    const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0)
+    const semanas = []
+
+    // Generar las últimas 8 semanas (lunes de cada una)
+    for (let i = 7; i >= 0; i--) {
+      const lunes = new Date(hoy)
+      const dia = lunes.getDay()
+      const diff = dia === 0 ? -6 : 1 - dia
+      lunes.setDate(lunes.getDate() + diff - (i * 7))
+      lunes.setHours(0, 0, 0, 0)
+
+      const proximoLunes = new Date(lunes)
+      proximoLunes.setDate(proximoLunes.getDate() + 7)
+
+      const [y, m, d] = lunes.toISOString().split('T')[0].split('-')
+
+      semanas.push({
+        lunes,
+        proximoLunes,
+        label: `${d}/${m}`,
+        venta: 0,
+        ganancia: 0,
+      })
+    }
+
+    pedidos.forEach(p => {
+      const f = toDate(p.fecha)
+      if (!f) return
+      const semana = semanas.find(s => f >= s.lunes && f < s.proximoLunes)
+      if (!semana) return
+      semana.venta += p.totalVenta ?? p.total ?? 0
+      semana.ganancia += p.totalGanancia ?? 0
+    })
+
+    return semanas.map(({ label, venta, ganancia }) => ({ label, venta, ganancia }))
+  }, [pedidos])
+
+  const hayTendencia = tendenciaSemanal.some(s => s.venta > 0)
+
+  const ultimosPedidos = [...pedidos]
+    .sort((a, b) => {
+      const ta = toDate(a.creadoEn)?.getTime() ?? toDate(a.fecha)?.getTime() ?? 0
+      const tb = toDate(b.creadoEn)?.getTime() ?? toDate(b.fecha)?.getTime() ?? 0
+      return tb - ta
+    })
+    .slice(0, 5)
 
   const modulos = [
     { path: '/ingredientes', icon: '🧂', label: 'Ingredientes', count: ingredientes.length, sub: 'ítems' },
@@ -125,6 +186,15 @@ export default function Dashboard() {
             <span className={styles.metricaLabel}>Pedidos activos</span>
             <span className={styles.metricaValor}>{pedidosActivos.length}</span>
           </div>
+          {pedidosWebSinAtender.length > 0 && (
+            <button
+              className={`${styles.metricaCard} ${styles.metricaAlerta}`}
+              onClick={() => navigate('/pedidos')}
+            >
+              <span className={styles.metricaLabel}>🔔 Web sin atender</span>
+              <span className={styles.metricaValor}>{pedidosWebSinAtender.length}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -147,6 +217,56 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
+      {/* Tendencia semanal */}
+      {hayTendencia && (
+        <div className={styles.seccion}>
+          <h3 className={styles.seccionTitle}>Tendencia de las últimas 8 semanas</h3>
+          <div className={styles.chartCard}>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart
+                data={tendenciaSemanal}
+                margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2D5C3" />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 12, fill: '#8A7A70' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 12, fill: '#8A7A70' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={v => '$' + v}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#FDFAF4',
+                    border: '1px solid #E2D5C3',
+                    borderRadius: 8,
+                    fontSize: 13,
+                  }}
+                  formatter={value => ['$' + value.toFixed(2)]}
+                />
+                <Bar
+                  dataKey="venta"
+                  name="Facturado"
+                  fill="#D4A853"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="ganancia"
+                  name="Ganancia"
+                  fill="#6B7C45"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       {/* Últimos pedidos */}
       {ultimosPedidos.length > 0 && (

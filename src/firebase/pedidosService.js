@@ -11,7 +11,7 @@ export function suscribirPedidos(callback, onError) {
   return onSnapshot(
     collection(db, COL),
     snap => {
-      const docs = snap.docs
+const docs = snap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => {
           // Usa creadoEn si existe, sino fecha, sino 0

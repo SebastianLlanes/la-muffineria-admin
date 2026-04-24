@@ -140,6 +140,19 @@
   background: var(--color-surface);
 }
 
+.itemSelectSize {
+  flex: 0 0 auto;
+  width: 135px;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
 .itemInput {
   width: 70px;
   padding: var(--space-xs) var(--space-sm);

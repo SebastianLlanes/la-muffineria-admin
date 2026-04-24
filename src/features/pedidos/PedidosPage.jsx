@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { usePedidos } from '../../contexts/PedidosContext'
 import { useRecetas } from '../../contexts/RecetasContext'
 import { useIngredientes } from '../../contexts/IngredientesContext'
@@ -55,6 +55,17 @@ function formatHora(pedido) {
   const d = timestamp.toDate()
   return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
 }
+function tokenizarNombre(str) {
+  return (str || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s*\([^)]*\)\s*/g, '')
+    .replace(/[&/,]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w && w !== 'y' && w !== 'con')
+    .sort()
+    .join(' ')
+} 
 
 export default function PedidosPage() {
   const { pedidos, loading } = usePedidos()
@@ -67,11 +78,86 @@ export default function PedidosPage() {
 
    const { recetas } = useRecetas()
   const { ingredientes } = useIngredientes()
-  const [calculando, setCalculando] = useState(null) // id del pedido en proceso
+  const [calculando, setCalculando] = useState(null) 
+  const autoCalculandoRef = useRef(new Set()) 
 
   const costosIndirectosPorUnidad = ingredientes
     .filter((i) => i.tipo === 'costo_indirecto')
     .reduce((acc, i) => acc + i.costoUnitario, 0)
+
+  // Cálculo automático de ganancia/margen para pedidos web sin costos.
+  // Se dispara cuando llegan pedidos o cambian las recetas. El filtro por
+  // totalCosto === 0 evita loops: al persistir se regenera el snapshot, pero
+  // el pedido ya no entra a la lista de pendientes.
+  useEffect(() => {
+    if (!pedidos.length || !recetas.length) return
+
+    const pendientes = pedidos.filter(
+      (p) =>
+        p.origen === 'web' &&
+        (!p.totalCosto || p.totalCosto === 0) &&
+        p.items?.length > 0 &&
+        !autoCalculandoRef.current.has(p.id)
+    )
+
+    if (pendientes.length === 0) return
+
+    pendientes.forEach(async (pedido) => {
+      autoCalculandoRef.current.add(pedido.id)
+      try {
+        const itemsActualizados = pedido.items.map((it) => {
+          const tokenItem = tokenizarNombre(it.nombre || it.name)
+          const receta = recetas.find(
+            (r) => tokenizarNombre(r.nombre) === tokenItem
+          )
+          return {
+            ...it,
+            recetaId: receta?.id ?? it.recetaId ?? '',
+            costoPorUnidad: receta?.costoPorUnidad ?? 0,
+          }
+        })
+
+        // Si ningún item matcheó con una receta, no escribimos nada.
+        const tieneAlgunMatch = itemsActualizados.some(
+          (it) => it.costoPorUnidad > 0
+        )
+        if (!tieneAlgunMatch) {
+          console.warn(
+            `[Pedidos] Sin match de recetas para ${pedido.cliente} (${pedido.id}). Items:`,
+            pedido.items.map((it) => it.nombre)
+          )
+          return
+        }
+
+        const totalVenta = pedido.totalVenta ?? pedido.total ?? 0
+        const totalCosto = itemsActualizados.reduce(
+          (acc, it) =>
+            acc +
+            (it.cantidad ?? it.quantity ?? 0) *
+              (it.costoPorUnidad + costosIndirectosPorUnidad),
+          0
+        )
+        const totalGanancia = totalVenta - totalCosto
+        const margen =
+          totalVenta > 0 ? (totalGanancia / totalVenta) * 100 : 0
+
+        await editarPedido(pedido.id, {
+          items: itemsActualizados,
+          totalVenta,
+          totalCosto,
+          totalGanancia,
+          margen,
+        })
+      } catch (err) {
+        console.error(
+          `Error auto-calculando costos de pedido ${pedido.id}:`,
+          err
+        )
+      } finally {
+        autoCalculandoRef.current.delete(pedido.id)
+      }
+    })
+  }, [pedidos, recetas, costosIndirectosPorUnidad])
 
   async function calcularCostos(pedido) {
     setCalculando(pedido.id)
@@ -272,7 +358,14 @@ export default function PedidosPage() {
                         : it.precio || 0;
                     return (
                       <div key={i} className={styles.itemRow}>
-                        <span>{nombre}</span>
+                        <span className={styles.itemNombre}>
+                          {nombre}
+                          {it.size && (
+                            <span className={`${styles.sizeBadge} ${styles['size' + it.size.charAt(0).toUpperCase() + it.size.slice(1)]}`}>
+                              {it.size}
+                            </span>
+                          )}
+                        </span>
                         <span className={styles.itemDetalle}>
                           {cantidad} u. × ${parseFloat(precio).toFixed(2)}
                         </span>
@@ -301,12 +394,18 @@ export default function PedidosPage() {
                       </strong>
                     </div>
                   )}
-{pedido.origen === 'admin' ? (
+                  {pedido.totalCosto > 0 ? (
                     <>
                       <div className={styles.totalRow}>
                         <span>Ganancia</span>
-                        <strong className={pedido.totalGanancia >= 0 ? styles.positivo : styles.negativo}>
-                          {pedido.totalGanancia >= 0 ? '+' : ''}$
+                        <strong
+                          className={
+                            pedido.totalGanancia >= 0
+                              ? styles.positivo
+                              : styles.negativo
+                          }
+                        >
+                          {pedido.totalGanancia >= 0 ? "+" : ""}$
                           {(pedido.totalGanancia ?? 0).toFixed(2)}
                         </strong>
                       </div>
@@ -345,15 +444,19 @@ export default function PedidosPage() {
                     Editar
                   </button>
 
-                  {pedido.origen === 'admin' && pedido.totalCosto === 0 && recetas.length > 0 && (
-                    <button
-                      className={styles.calcularBtn}
-                      onClick={() => calcularCostos(pedido)}
-                      disabled={calculando === pedido.id}
-                    >
-                      {calculando === pedido.id ? "Calculando..." : "🧮 Calcular costos"}
-                    </button>
-                  )}
+                  {pedido.origen === "admin" &&
+                    pedido.totalCosto === 0 &&
+                    recetas.length > 0 && (
+                      <button
+                        className={styles.calcularBtn}
+                        onClick={() => calcularCostos(pedido)}
+                        disabled={calculando === pedido.id}
+                      >
+                        {calculando === pedido.id
+                          ? "Calculando..."
+                          : "🧮 Calcular costos"}
+                      </button>
+                    )}
 
                   {confirmId === pedido.id ? (
                     <>
