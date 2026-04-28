@@ -212,3 +212,201 @@
   color: var(--color-texto-suave, #888);
   margin: 0;
 }
+
+/* ============================================
+   Lista de pedidos dentro de cada card de hornada
+   ============================================ */
+.hornadaPedidos {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 0 0;
+  border-top: 1px dashed var(--color-borde, #e5e0d6);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.hornadaPedidoRow {
+  display: flex;
+  align-items: center;
+}
+
+.pedidoCheck {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+  font-size: 0.92rem;
+  color: var(--color-texto, #3d2f1f);
+  user-select: none;
+  padding: 0.25rem 0;
+  width: 100%;
+  transition: color 0.15s ease;
+}
+
+.pedidoCheck:hover {
+  color: var(--color-cacao, #6b4423);
+}
+
+.pedidoCheck input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--color-verde-oliva, #6b7a3a);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   Sección "Hornada seleccionada"
+   ============================================ */
+.hornadaSel {
+  margin: 1.5rem 0;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(
+    135deg,
+    var(--color-crema, #faf6ed) 0%,
+    var(--color-trigo, #e8dcc4) 100%
+  );
+  border: 2px solid var(--color-verde-oliva, #6b7a3a);
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(107, 122, 58, 0.12);
+}
+
+.hornadaSelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.hornadaSelTitle {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--color-verde-oliva, #6b7a3a);
+  font-weight: 700;
+}
+
+.hornadaSelSubtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-cacao, #6b4423);
+  opacity: 0.8;
+}
+
+.hornadaSelLimpiar {
+  background: transparent;
+  border: 1px solid var(--color-rosa-viejo, #b87a7a);
+  color: var(--color-rosa-viejo, #b87a7a);
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.hornadaSelLimpiar:hover {
+  background: var(--color-rosa-viejo, #b87a7a);
+  color: white;
+}
+
+/* ============================================
+   Lista de recetas consolidadas
+   ============================================ */
+.hornadaSelRecetas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* NEW */
+.hornadaSelRecetaRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1rem 1.25rem;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid var(--color-borde, #e5e0d6);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hornadaSelRecetaRow:hover {
+  border-color: var(--color-verde-oliva, #6b7a3a);
+  box-shadow: 0 2px 8px rgba(107, 122, 58, 0.08);
+}
+
+.hornadaSelRecetaCantidad {
+  color: var(--color-verde-oliva, #6b7a3a);
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 3.5rem;
+  text-align: right;
+  line-height: 1;
+}
+
+.hornadaSelRecetaNombre {
+  font-weight: 500;
+  color: var(--color-cacao, #6b4423);
+  font-size: 1rem;
+}
+
+/* NEW */
+.hornadaSelCrearBtn {
+  background: transparent;
+  color: var(--color-verde-oliva, #6b7a3a);
+  border: 1.5px solid var(--color-verde-oliva, #6b7a3a);
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+
+.hornadaSelCrearBtn:hover {
+  background: var(--color-verde-oliva, #6b7a3a);
+  color: white;
+}
+
+.hornadaSelCrearBtn:active {
+  transform: scale(0.97);
+}
+
+/* ============================================
+   Responsive — mobile
+   ============================================ */
+@media (max-width: 640px) {
+  .hornadaSel {
+    padding: 1rem;
+  }
+
+  .hornadaSelRecetaRow {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "nombre cantidad"
+      "btn btn";
+    row-gap: 0.6rem;
+  }
+
+  .hornadaSelRecetaNombre {
+    grid-area: nombre;
+  }
+
+  .hornadaSelRecetaCantidad {
+    grid-area: cantidad;
+  }
+
+  .hornadaSelCrearBtn {
+    grid-area: btn;
+    width: 100%;
+  }
+}

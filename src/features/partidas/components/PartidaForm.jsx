@@ -14,7 +14,7 @@ const vacía = {
   notas: '',
 }
 
-export default function PartidaForm({ item, onClose }) {
+export default function PartidaForm({ item, precargar, onClose }) {
   const { recetas } = useRecetas()
   const { ingredientes } = useIngredientes()
   const [form, setForm] = useState(vacía)
@@ -28,8 +28,28 @@ export default function PartidaForm({ item, onClose }) {
   useEffect(() => {
     if (item) {
       setForm(item)
+      return
     }
-  }, [item])
+    if (precargar && recetas.length > 0) {
+      const receta = recetas.find(r => r.nombre === precargar.recetaNombre)
+      if (!receta) return // sin match: el usuario elige la receta a mano
+
+      const factor = receta.rendimiento > 0
+        ? precargar.cantidadProducida / receta.rendimiento
+        : 1
+
+      setForm({
+        ...vacía,
+        recetaId: receta.id,
+        fecha: hoy(),
+        cantidadProducida: precargar.cantidadProducida,
+        ingredientesUsados: receta.ingredientes.map(ing => ({
+          ...ing,
+          cantidad: (parseFloat(ing.cantidad) || 0) * factor,
+        })),
+      })
+    }
+  }, [item, precargar, recetas])
 
   function handleChange(e) {
     const { name, value } = e.target

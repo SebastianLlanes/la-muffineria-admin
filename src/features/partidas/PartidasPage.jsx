@@ -27,6 +27,9 @@ export default function PartidasPage() {
   const [itemEditar, setItemEditar] = useState(null);
   const [confirmId, setConfirmId] = useState(null);
 
+  const [seleccionados, setSeleccionados] = useState(new Set());
+  const [precargarPartida, setPrecargarPartida] = useState(null);
+
   // Agrupar pedidos activos por fechaEntrega para planificar hornadas
   const hornadas = pedidos
     .filter(
@@ -52,17 +55,45 @@ export default function PartidasPage() {
     a.localeCompare(b),
   );
 
+  function toggleSeleccion(pedidoId) {
+    setSeleccionados(prev => {
+      const next = new Set(prev);
+      if (next.has(pedidoId)) next.delete(pedidoId);
+      else next.add(pedidoId);
+      return next;
+    });
+  }
+
+  const pedidosSeleccionados = pedidos.filter(p => seleccionados.has(p.id));
+  const recetasSeleccionadas = pedidosSeleccionados.reduce((acc, pedido) => {
+    pedido.items?.forEach(it => {
+      const nombre = it.nombre || '—';
+      const cantidad = Number(it.cantidad || it.quantity || 0);
+      acc[nombre] = (acc[nombre] || 0) + cantidad;
+    });
+    return acc;
+  }, {});
+
+
   function abrirNueva() {
     setItemEditar(null);
+    setPrecargarPartida(null);
     setModalAbierto(true);
   }
   function abrirEditar(item) {
     setItemEditar(item);
+    setPrecargarPartida(null);
+    setModalAbierto(true);
+  }
+  function abrirDesdeSeleccion(recetaNombre, cantidadProducida) {
+    setItemEditar(null);
+    setPrecargarPartida({ recetaNombre, cantidadProducida });
     setModalAbierto(true);
   }
   function cerrarModal() {
     setModalAbierto(false);
     setItemEditar(null);
+    setPrecargarPartida(null);
   }
 
   async function handleEliminar(id) {
@@ -120,13 +151,61 @@ export default function PartidasPage() {
                       </li>
                     ))}
                   </ul>
-                  <p className={styles.hornadaClientes}>
-                    🛒 {data.pedidos.map((p) => p.cliente).join(", ")}
-                  </p>
+                    <ul className={styles.hornadaPedidos}>
+                    {data.pedidos.map((pedido) => (
+                      <li key={pedido.id} className={styles.hornadaPedidoRow}>
+                        <label className={styles.pedidoCheck}>
+                          <input
+                            type="checkbox"
+                            checked={seleccionados.has(pedido.id)}
+                            onChange={() => toggleSeleccion(pedido.id)}
+                          />
+                          <span>🛒 {pedido.cliente}</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Hornada seleccionada manualmente */}
+      {seleccionados.size > 0 && (
+        <div className={styles.hornadaSel}>
+          <div className={styles.hornadaSelHeader}>
+            <div>
+              <h3 className={styles.hornadaSelTitle}>🍳 Hornada seleccionada</h3>
+              <p className={styles.hornadaSelSubtitle}>
+                {pedidosSeleccionados.length} pedido
+                {pedidosSeleccionados.length !== 1 ? "s" : ""} · podés cruzar fechas
+              </p>
+            </div>
+            <button
+              className={styles.hornadaSelLimpiar}
+              onClick={() => setSeleccionados(new Set())}
+            >
+              Limpiar selección
+            </button>
+          </div>
+          <ul className={styles.hornadaSelRecetas}>
+            {Object.entries(recetasSeleccionadas).map(([nombre, cantidad]) => (
+              <li key={nombre} className={styles.hornadaSelRecetaRow}>
+                <strong className={styles.hornadaSelRecetaCantidad}>
+                  {cantidad}
+                </strong>
+                <span className={styles.hornadaSelRecetaNombre}>{nombre}</span>
+                <button
+                  className={styles.hornadaSelCrearBtn}
+                  onClick={() => abrirDesdeSeleccion(nombre, cantidad)}
+                >
+                  Crear partida
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -200,7 +279,13 @@ export default function PartidasPage() {
         </div>
       )}
 
-      {modalAbierto && <PartidaForm item={itemEditar} onClose={cerrarModal} />}
+      {modalAbierto && (
+        <PartidaForm
+          item={itemEditar}
+          precargar={precargarPartida}
+          onClose={cerrarModal}
+        />
+      )}
     </div>
   );
 }
