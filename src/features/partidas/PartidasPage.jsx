@@ -64,15 +64,45 @@ export default function PartidasPage() {
     });
   }
 
-  const pedidosSeleccionados = pedidos.filter(p => seleccionados.has(p.id));
-  const recetasSeleccionadas = pedidosSeleccionados.reduce((acc, pedido) => {
+const pedidosSeleccionados = pedidos.filter(p => seleccionados.has(p.id));
+
+  // Limpia "(mediano)" / "(grande)" / "(mini)" del nombre para obtener el sabor puro
+  function limpiarNombre(nombre) {
+    return (nombre || '—').replace(/\s*\([^)]*\)\s*$/, '').trim();
+  }
+
+  // Estructura: { saborKey: { sabor: string, total: number, tamaños: { [size]: number } } }
+  const saboresSeleccionados = pedidosSeleccionados.reduce((acc, pedido) => {
     pedido.items?.forEach(it => {
-      const nombre = it.nombre || '—';
+      const sabor = limpiarNombre(it.nombre);
+      const key = it.recetaId || sabor; // unifica items con mismo recetaId aunque difiera el nombre
       const cantidad = Number(it.cantidad || it.quantity || 0);
-      acc[nombre] = (acc[nombre] || 0) + cantidad;
+      const size = it.size || 'sin especificar';
+
+      if (!acc[key]) acc[key] = { sabor, total: 0, tamaños: {} };
+      acc[key].total += cantidad;
+      acc[key].tamaños[size] = (acc[key].tamaños[size] || 0) + cantidad;
     });
     return acc;
   }, {});
+
+  // Ordena tamaños en un orden lógico (mini → mediano → grande), resto al final alfabéticamente
+  const ordenTamaños = ['mini', 'mediano', 'grande'];
+  function ordenarTamaños(tamaños) {
+    return Object.entries(tamaños).sort(([a], [b]) => {
+      const ia = ordenTamaños.indexOf(a);
+      const ib = ordenTamaños.indexOf(b);
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+  }
+
+  // Sabores ordenados alfabéticamente
+  const saboresOrdenados = Object.values(saboresSeleccionados).sort((a, b) =>
+    a.sabor.localeCompare(b.sabor),
+  );
 
 
   function abrirNueva() {
@@ -85,11 +115,16 @@ export default function PartidasPage() {
     setPrecargarPartida(null);
     setModalAbierto(true);
   }
-  function abrirDesdeSeleccion(recetaNombre, cantidadProducida) {
+  function abrirDesdeSeleccion(sabor, size, cantidadProducida) {
     setItemEditar(null);
+    // Reconstruye el nombre tal como aparece en `recetas` ("Carrot Cake (mediano)")
+    const recetaNombre = size && size !== 'sin especificar'
+      ? `${sabor} (${size})`
+      : sabor;
     setPrecargarPartida({ recetaNombre, cantidadProducida });
     setModalAbierto(true);
   }
+
   function cerrarModal() {
     setModalAbierto(false);
     setItemEditar(null);
@@ -151,7 +186,7 @@ export default function PartidasPage() {
                       </li>
                     ))}
                   </ul>
-                    <ul className={styles.hornadaPedidos}>
+                  <ul className={styles.hornadaPedidos}>
                     {data.pedidos.map((pedido) => (
                       <li key={pedido.id} className={styles.hornadaPedidoRow}>
                         <label className={styles.pedidoCheck}>
@@ -177,10 +212,13 @@ export default function PartidasPage() {
         <div className={styles.hornadaSel}>
           <div className={styles.hornadaSelHeader}>
             <div>
-              <h3 className={styles.hornadaSelTitle}>🍳 Hornada seleccionada</h3>
+              <h3 className={styles.hornadaSelTitle}>
+                🍳 Hornada seleccionada
+              </h3>
               <p className={styles.hornadaSelSubtitle}>
                 {pedidosSeleccionados.length} pedido
-                {pedidosSeleccionados.length !== 1 ? "s" : ""} · podés cruzar fechas
+                {pedidosSeleccionados.length !== 1 ? "s" : ""} · podés cruzar
+                fechas
               </p>
             </div>
             <button
@@ -190,19 +228,37 @@ export default function PartidasPage() {
               Limpiar selección
             </button>
           </div>
-          <ul className={styles.hornadaSelRecetas}>
-            {Object.entries(recetasSeleccionadas).map(([nombre, cantidad]) => (
-              <li key={nombre} className={styles.hornadaSelRecetaRow}>
-                <strong className={styles.hornadaSelRecetaCantidad}>
-                  {cantidad}
-                </strong>
-                <span className={styles.hornadaSelRecetaNombre}>{nombre}</span>
-                <button
-                  className={styles.hornadaSelCrearBtn}
-                  onClick={() => abrirDesdeSeleccion(nombre, cantidad)}
-                >
-                  Crear partida
-                </button>
+          <ul className={styles.hornadaSelSabores}>
+            {saboresOrdenados.map(({ sabor, total, tamaños }) => (
+              <li key={sabor} className={styles.hornadaSelSabor}>
+                <div className={styles.hornadaSelSaborHeader}>
+                  <strong className={styles.hornadaSelSaborTotal}>
+                    {total}
+                  </strong>
+                  <span className={styles.hornadaSelSaborNombre}>
+                    🧁 {sabor}
+                  </span>
+                </div>
+                <ul className={styles.hornadaSelTamaños}>
+                  {ordenarTamaños(tamaños).map(([size, cantidad]) => (
+                    <li key={size} className={styles.hornadaSelTamañoRow}>
+                      <span className={styles.hornadaSelTamañoCantidad}>
+                        {cantidad}
+                      </span>
+                      <span className={styles.hornadaSelTamañoNombre}>
+                        {size}
+                      </span>
+                      <button
+                        className={styles.hornadaSelCrearBtn}
+                        onClick={() =>
+                          abrirDesdeSeleccion(sabor, size, cantidad)
+                        }
+                      >
+                        Crear partida
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </li>
             ))}
           </ul>

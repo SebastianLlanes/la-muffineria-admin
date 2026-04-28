@@ -315,47 +315,89 @@
 /* ============================================
    Lista de recetas consolidadas
    ============================================ */
-.hornadaSelRecetas {
+/* NEW */
+.hornadaSelSabores {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
-/* NEW */
-.hornadaSelRecetaRow {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 1.25rem;
-  padding: 1rem 1.25rem;
+.hornadaSelSabor {
   background: white;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--color-borde, #e5e0d6);
+  overflow: hidden;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.hornadaSelRecetaRow:hover {
+.hornadaSelSabor:hover {
   border-color: var(--color-verde-oliva, #6b7a3a);
   box-shadow: 0 2px 8px rgba(107, 122, 58, 0.08);
 }
 
-.hornadaSelRecetaCantidad {
+.hornadaSelSaborHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  background: var(--color-crema, #faf6ed);
+  border-bottom: 1px solid var(--color-borde, #e5e0d6);
+}
+
+.hornadaSelSaborTotal {
   color: var(--color-verde-oliva, #6b7a3a);
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
-  min-width: 3.5rem;
-  text-align: right;
+  min-width: 3rem;
   line-height: 1;
 }
 
-.hornadaSelRecetaNombre {
-  font-weight: 500;
+.hornadaSelSaborNombre {
+  font-weight: 700;
   color: var(--color-cacao, #6b4423);
-  font-size: 1rem;
+  font-size: 1.05rem;
+}
+
+.hornadaSelTamaños {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.hornadaSelTamañoRow {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  transition: background 0.12s ease;
+}
+
+.hornadaSelTamañoRow:hover {
+  background: var(--color-crema, #faf6ed);
+}
+
+.hornadaSelTamañoCantidad {
+  color: var(--color-cacao, #6b4423);
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.hornadaSelTamañoNombre {
+  color: var(--color-cacao, #6b4423);
+  font-size: 0.92rem;
+  text-transform: capitalize;
+  opacity: 0.85;
 }
 
 /* NEW */
@@ -389,20 +431,24 @@
     padding: 1rem;
   }
 
-  .hornadaSelRecetaRow {
-    grid-template-columns: 1fr auto;
+  .hornadaSelSaborHeader {
+    padding: 0.75rem 1rem;
+  }
+
+  .hornadaSelTamañoRow {
+    grid-template-columns: 2.25rem 1fr;
     grid-template-areas:
-      "nombre cantidad"
+      "cantidad nombre"
       "btn btn";
-    row-gap: 0.6rem;
+    row-gap: 0.5rem;
   }
 
-  .hornadaSelRecetaNombre {
-    grid-area: nombre;
-  }
-
-  .hornadaSelRecetaCantidad {
+  .hornadaSelTamañoCantidad {
     grid-area: cantidad;
+  }
+
+  .hornadaSelTamañoNombre {
+    grid-area: nombre;
   }
 
   .hornadaSelCrearBtn {
