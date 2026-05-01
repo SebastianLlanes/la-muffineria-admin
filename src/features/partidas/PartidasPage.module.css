@@ -315,19 +315,74 @@
 /* ============================================
    Lista de recetas consolidadas
    ============================================ */
-/* NEW */
+.hornadaSel {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(
+    135deg,
+    var(--color-crema, #faf6ed) 0%,
+    var(--color-trigo, #e8dcc4) 100%
+  );
+  border: 2px solid var(--color-verde-oliva, #6b7a3a);
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(107, 122, 58, 0.12);
+}
+
+.hornadaSelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.hornadaSelTitle {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-verde-oliva, #6b7a3a);
+  font-weight: 700;
+}
+
+.hornadaSelSubtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  color: var(--color-cacao, #6b4423);
+  opacity: 0.8;
+}
+
+.hornadaSelLimpiar {
+  background: transparent;
+  border: 1px solid var(--color-rosa-viejo, #b87a7a);
+  color: var(--color-rosa-viejo, #b87a7a);
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.hornadaSelLimpiar:hover {
+  background: var(--color-rosa-viejo, #b87a7a);
+  color: white;
+}
+
+/* ============================================
+   Lista de recetas consolidadas
+   ============================================ */
 .hornadaSelSabores {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.4rem;
 }
 
 .hornadaSelSabor {
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid var(--color-borde, #e5e0d6);
   overflow: hidden;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -335,49 +390,49 @@
 
 .hornadaSelSabor:hover {
   border-color: var(--color-verde-oliva, #6b7a3a);
-  box-shadow: 0 2px 8px rgba(107, 122, 58, 0.08);
+  box-shadow: 0 2px 6px rgba(107, 122, 58, 0.08);
 }
 
 .hornadaSelSaborHeader {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.85rem 1.25rem;
+  gap: 0.6rem;
+  padding: 0.15rem 0.25rem;
   background: var(--color-crema, #faf6ed);
   border-bottom: 1px solid var(--color-borde, #e5e0d6);
 }
 
 .hornadaSelSaborTotal {
   color: var(--color-verde-oliva, #6b7a3a);
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  min-width: 3rem;
+  min-width: 2.25rem;
   line-height: 1;
 }
 
 .hornadaSelSaborNombre {
   font-weight: 700;
   color: var(--color-cacao, #6b4423);
-  font-size: 1.05rem;
+  font-size: 0.92rem;
 }
 
 .hornadaSelTamaños {
   list-style: none;
   margin: 0;
-  padding: 0.5rem 0.75rem;
+  padding: 0.1rem 0.2rem;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.1rem;
 }
 
 .hornadaSelTamañoRow {
   display: grid;
-  grid-template-columns: 2.5rem 1fr auto;
+  grid-template-columns: 2rem 1fr auto;
   align-items: center;
-  gap: 1rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
+  gap: 0.6rem;
+  padding: 0.1rem 0.2rem;
+  border-radius: 6px;
   transition: background 0.12s ease;
 }
 
@@ -387,7 +442,7 @@
 
 .hornadaSelTamañoCantidad {
   color: var(--color-cacao, #6b4423);
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -395,19 +450,18 @@
 
 .hornadaSelTamañoNombre {
   color: var(--color-cacao, #6b4423);
-  font-size: 0.92rem;
+  font-size: 0.83rem;
   text-transform: capitalize;
   opacity: 0.85;
 }
 
-/* NEW */
 .hornadaSelCrearBtn {
   background: transparent;
   color: var(--color-verde-oliva, #6b7a3a);
   border: 1.5px solid var(--color-verde-oliva, #6b7a3a);
-  padding: 0.45rem 0.9rem;
-  border-radius: 8px;
-  font-size: 0.82rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
@@ -422,7 +476,6 @@
 .hornadaSelCrearBtn:active {
   transform: scale(0.97);
 }
-
 /* ============================================
    Responsive — mobile
    ============================================ */
