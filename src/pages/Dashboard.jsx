@@ -50,13 +50,13 @@ function formatFecha(valor) {
 }
 
 export default function Dashboard() {
-  const { pedidos } = usePedidos()
-  const { partidas } = usePartidas()
-  const { recetas } = useRecetas()
-  const { ingredientes } = useIngredientes()
-  const navigate = useNavigate()
+  const { pedidos } = usePedidos();
+  const { partidas } = usePartidas();
+  const { recetas } = useRecetas();
+  const { ingredientes } = useIngredientes();
+  const navigate = useNavigate();
 
-  const lunes = getLunesSemanaActual()
+  const lunes = getLunesSemanaActual();
   const lunesStr = lunes.toISOString().split("T")[0];
 
   function toDate(valor) {
@@ -74,8 +74,11 @@ export default function Dashboard() {
     const f = toDate(p.fecha);
     return f && f >= lunes;
   });
-  
-  const gananciasSemana = pedidosSemana.reduce((acc, p) => acc + (p.totalGanancia || 0), 0)
+
+  const gananciasSemana = pedidosSemana.reduce(
+    (acc, p) => acc + (p.totalGanancia || 0),
+    0,
+  );
   const ventaSemana = pedidosSemana.reduce(
     (acc, p) => acc + (p.totalVenta || 0),
     0,
@@ -85,31 +88,58 @@ export default function Dashboard() {
     (p) => p.estado !== "cobrado" && p.estado !== "entregado",
   );
 
+  const muffinsTotal = pedidos.reduce(
+    (acc, p) =>
+      acc + (p.items || []).reduce((a, i) => a + (i.cantidad || 0), 0),
+    0,
+  );
+
+  const muffinsGrandes = pedidos.reduce(
+    (acc, p) =>
+      acc +
+      (p.items || [])
+        .filter((i) => i.size === "grande")
+        .reduce((a, i) => a + (i.cantidad || 0), 0),
+    0,
+  );
+
+  const muffinsMedianos = pedidos.reduce(
+    (acc, p) =>
+      acc +
+      (p.items || [])
+        .filter((i) => i.size === "mediano")
+        .reduce((a, i) => a + (i.cantidad || 0), 0),
+    0,
+  );
+
   // Pedidos web recién llegados del e-commerce que requieren tu confirmación
   const pedidosWebSinAtender = pedidos.filter(
     (p) => p.origen === "web" && p.estado === "nuevo",
   );
 
-  const unidadesSemana = partidasSemana.reduce((acc, p) => acc + (p.cantidadProducida || 0), 0)
+  const unidadesSemana = partidasSemana.reduce(
+    (acc, p) => acc + (p.cantidadProducida || 0),
+    0,
+  );
 
   // Tendencia de las últimas 8 semanas: venta y ganancia por semana
   const tendenciaSemanal = useMemo(() => {
-    const hoy = new Date()
-    hoy.setHours(0, 0, 0, 0)
-    const semanas = []
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const semanas = [];
 
     // Generar las últimas 8 semanas (lunes de cada una)
     for (let i = 7; i >= 0; i--) {
-      const lunes = new Date(hoy)
-      const dia = lunes.getDay()
-      const diff = dia === 0 ? -6 : 1 - dia
-      lunes.setDate(lunes.getDate() + diff - (i * 7))
-      lunes.setHours(0, 0, 0, 0)
+      const lunes = new Date(hoy);
+      const dia = lunes.getDay();
+      const diff = dia === 0 ? -6 : 1 - dia;
+      lunes.setDate(lunes.getDate() + diff - i * 7);
+      lunes.setHours(0, 0, 0, 0);
 
-      const proximoLunes = new Date(lunes)
-      proximoLunes.setDate(proximoLunes.getDate() + 7)
+      const proximoLunes = new Date(lunes);
+      proximoLunes.setDate(proximoLunes.getDate() + 7);
 
-      const [y, m, d] = lunes.toISOString().split('T')[0].split('-')
+      const [y, m, d] = lunes.toISOString().split("T")[0].split("-");
 
       semanas.push({
         lunes,
@@ -117,39 +147,81 @@ export default function Dashboard() {
         label: `${d}/${m}`,
         venta: 0,
         ganancia: 0,
-      })
+      });
     }
 
-    pedidos.forEach(p => {
-      const f = toDate(p.fecha)
-      if (!f) return
-      const semana = semanas.find(s => f >= s.lunes && f < s.proximoLunes)
-      if (!semana) return
-      semana.venta += p.totalVenta ?? p.total ?? 0
-      semana.ganancia += p.totalGanancia ?? 0
-    })
+    pedidos.forEach((p) => {
+      const f = toDate(p.fecha);
+      if (!f) return;
+      const semana = semanas.find((s) => f >= s.lunes && f < s.proximoLunes);
+      if (!semana) return;
+      semana.venta += p.totalVenta ?? p.total ?? 0;
+      semana.ganancia += p.totalGanancia ?? 0;
+    });
 
-    return semanas.map(({ label, venta, ganancia }) => ({ label, venta, ganancia }))
-  }, [pedidos])
+    return semanas.map(({ label, venta, ganancia }) => ({
+      label,
+      venta,
+      ganancia,
+    }));
+  }, [pedidos]);
 
-  const hayTendencia = tendenciaSemanal.some(s => s.venta > 0)
+  const hayTendencia = tendenciaSemanal.some((s) => s.venta > 0);
 
   const ultimosPedidos = [...pedidos]
     .sort((a, b) => {
-      const ta = toDate(a.creadoEn)?.getTime() ?? toDate(a.fecha)?.getTime() ?? 0
-      const tb = toDate(b.creadoEn)?.getTime() ?? toDate(b.fecha)?.getTime() ?? 0
-      return tb - ta
+      const ta =
+        toDate(a.creadoEn)?.getTime() ?? toDate(a.fecha)?.getTime() ?? 0;
+      const tb =
+        toDate(b.creadoEn)?.getTime() ?? toDate(b.fecha)?.getTime() ?? 0;
+      return tb - ta;
     })
-    .slice(0, 5)
+    .slice(0, 5);
 
   const modulos = [
-    { path: '/ingredientes', icon: '🧂', label: 'Ingredientes', count: ingredientes.length, sub: 'ítems' },
-    { path: '/recetas',      icon: '📋', label: 'Recetas',      count: recetas.length,      sub: 'recetas' },
-    { path: '/partidas',     icon: '🏭', label: 'Partidas',     count: partidas.length,     sub: 'registradas' },
-    { path: '/calculador',   icon: '🧮', label: 'Calculador',   count: null,                sub: 'proyectá costos' },
-    { path: '/pedidos',      icon: '📦', label: 'Pedidos',      count: pedidosActivos.length, sub: 'activos' },
-    { path: '/reportes',     icon: '📈', label: 'Reportes',     count: null,                sub: 'ver métricas' },
-  ]
+    {
+      path: "/ingredientes",
+      icon: "🧂",
+      label: "Ingredientes",
+      count: ingredientes.length,
+      sub: "ítems",
+    },
+    {
+      path: "/recetas",
+      icon: "📋",
+      label: "Recetas",
+      count: recetas.length,
+      sub: "recetas",
+    },
+    {
+      path: "/partidas",
+      icon: "🏭",
+      label: "Partidas",
+      count: partidas.length,
+      sub: "registradas",
+    },
+    {
+      path: "/calculador",
+      icon: "🧮",
+      label: "Calculador",
+      count: null,
+      sub: "proyectá costos",
+    },
+    {
+      path: "/pedidos",
+      icon: "📦",
+      label: "Pedidos",
+      count: pedidosActivos.length,
+      sub: "activos",
+    },
+    {
+      path: "/reportes",
+      icon: "📈",
+      label: "Reportes",
+      count: null,
+      sub: "ver métricas",
+    },
+  ];
 
   return (
     <div className={styles.page}>
@@ -161,6 +233,26 @@ export default function Dashboard() {
       {/* Métricas semana */}
       <div className={styles.seccion}>
         <h3 className={styles.seccionTitle}>Esta semana</h3>
+
+        {/* Contadores de muffins */}
+        <div className={styles.seccion}>
+          <h3 className={styles.seccionTitle}>Muffins vendidos (histórico)</h3>
+          <div className={styles.metricasGrid}>
+            <div className={styles.metricaCard}>
+              <span className={styles.metricaLabel}>🧁 Total</span>
+              <span className={styles.metricaValor}>{muffinsTotal}</span>
+            </div>
+            <div className={styles.metricaCard}>
+              <span className={styles.metricaLabel}>🔵 Grandes</span>
+              <span className={styles.metricaValor}>{muffinsGrandes}</span>
+            </div>
+            <div className={styles.metricaCard}>
+              <span className={styles.metricaLabel}>🟡 Medianos</span>
+              <span className={styles.metricaValor}>{muffinsMedianos}</span>
+            </div>
+          </div>
+        </div>
+
         <div className={styles.metricasGrid}>
           <div className={styles.metricaCard}>
             <span className={styles.metricaLabel}>Pedidos realizados</span>
@@ -189,10 +281,12 @@ export default function Dashboard() {
           {pedidosWebSinAtender.length > 0 && (
             <button
               className={`${styles.metricaCard} ${styles.metricaAlerta}`}
-              onClick={() => navigate('/pedidos')}
+              onClick={() => navigate("/pedidos")}
             >
               <span className={styles.metricaLabel}>🔔 Web sin atender</span>
-              <span className={styles.metricaValor}>{pedidosWebSinAtender.length}</span>
+              <span className={styles.metricaValor}>
+                {pedidosWebSinAtender.length}
+              </span>
             </button>
           )}
         </div>
@@ -221,7 +315,9 @@ export default function Dashboard() {
       {/* Tendencia semanal */}
       {hayTendencia && (
         <div className={styles.seccion}>
-          <h3 className={styles.seccionTitle}>Tendencia de las últimas 8 semanas</h3>
+          <h3 className={styles.seccionTitle}>
+            Tendencia de las últimas 8 semanas
+          </h3>
           <div className={styles.chartCard}>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart
@@ -231,24 +327,24 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#E2D5C3" />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 12, fill: '#8A7A70' }}
+                  tick={{ fontSize: 12, fill: "#8A7A70" }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fontSize: 12, fill: '#8A7A70' }}
+                  tick={{ fontSize: 12, fill: "#8A7A70" }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={v => '$' + v}
+                  tickFormatter={(v) => "$" + v}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#FDFAF4',
-                    border: '1px solid #E2D5C3',
+                    backgroundColor: "#FDFAF4",
+                    border: "1px solid #E2D5C3",
                     borderRadius: 8,
                     fontSize: 13,
                   }}
-                  formatter={value => ['$' + value.toFixed(2)]}
+                  formatter={(value) => ["$" + value.toFixed(2)]}
                 />
                 <Bar
                   dataKey="venta"
