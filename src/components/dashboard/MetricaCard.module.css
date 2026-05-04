@@ -1,0 +1,74 @@
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+  font-family: inherit;
+}
+
+button.card {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+button.card:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon {
+  font-size: 1rem;
+}
+
+.valor {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-cacao);
+}
+
+/* Tono destacada (verde oliva — KPI principal) */
+.tonoDestacada {
+  border-color: rgba(107, 124, 69, 0.4);
+  background: rgba(107, 124, 69, 0.05);
+}
+
+/* Tono alerta (rosa viejo — requiere atención) */
+.tonoAlerta {
+  background: rgba(184, 122, 138, 0.1);
+  border: 1px solid rgba(184, 122, 138, 0.35);
+  animation: pulsoAlerta 2.5s ease-in-out infinite;
+}
+
+.tonoAlerta:hover {
+  background: rgba(184, 122, 138, 0.18);
+  border-color: rgba(184, 122, 138, 0.6);
+  animation: none;
+}
+
+.tonoAlerta .label,
+.tonoAlerta .valor {
+  color: #8B5966;
+}
+
+.tonoAlerta .label {
+  font-weight: 500;
+}
+
+@keyframes pulsoAlerta {
+  0%, 100% { box-shadow: var(--shadow-sm); }
+  50%      { box-shadow: 0 0 0 4px rgba(184, 122, 138, 0.15), var(--shadow-sm); }
+}

@@ -1,0 +1,35 @@
+.contenedor {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pill {
+  padding: 6px 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: 99px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.pill:hover {
+  border-color: var(--color-primary);
+  color: var(--color-cacao);
+}
+
+.pillActiva {
+  background: var(--color-primary, #6B8F4A);
+  color: var(--color-surface, #FDFAF4);
+  border-color: var(--color-primary, #6B8F4A);
+}
+
+.pillActiva:hover {
+  color: var(--color-surface, #FDFAF4);
+  background: var(--color-primary, #6B8F4A);
+}

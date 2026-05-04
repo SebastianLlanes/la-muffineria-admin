@@ -1,0 +1,19 @@
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.titulo {
+  font-size: var(--font-size-md);
+  color: var(--color-cacao);
+  font-weight: 600;
+}
+
+.chartCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+}
