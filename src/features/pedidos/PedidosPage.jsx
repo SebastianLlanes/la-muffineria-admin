@@ -356,6 +356,7 @@ export default function PedidosPage() {
                 </div>
 
                 {/* Items */}
+{/* Items */}
                 <div className={styles.items}>
                   {pedido.items?.map((it, i) => {
                     const nombre = it.nombre || it.name || "—";
@@ -365,12 +366,17 @@ export default function PedidosPage() {
                         ? it.precioUnitario
                         : it.precio || 0;
                     return (
-                      <div key={i} className={styles.itemRow}>
+                      <div key={i} className={`${styles.itemRow} ${it.sinAzucar ? styles.itemRowDiabetico : ''}`}>
                         <span className={styles.itemNombre}>
                           {nombre}
                           {it.size && (
                             <span className={`${styles.sizeBadge} ${styles['size' + it.size.charAt(0).toUpperCase() + it.size.slice(1)]}`}>
                               {it.size}
+                            </span>
+                          )}
+                          {it.sinAzucar && (
+                            <span className={styles.diabeticoBadge} title="Apto diabético">
+                              🚫🍬
                             </span>
                           )}
                         </span>
