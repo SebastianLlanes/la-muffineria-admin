@@ -43,10 +43,15 @@ export default function PartidasPage() {
       if (!fecha) return acc;
       if (!acc[fecha]) acc[fecha] = { pedidos: [], recetas: {} };
       acc[fecha].pedidos.push(pedido);
-      pedido.items?.forEach(it => {
-  const nombre = it.nombre || '—'
-  const cantidad = Number(it.cantidad || it.quantity || 0)
-  acc[fecha].recetas[nombre] = (acc[fecha].recetas[nombre] || 0) + cantidad
+          pedido.items?.forEach(it => {
+        const nombre = it.nombre || '—'
+        const cantidad = Number(it.cantidad || it.quantity || 0)
+        const sinAzucar = !!it.sinAzucar
+        const key = `${nombre}__${sinAzucar ? 'sa' : 'normal'}`
+        if (!acc[fecha].recetas[key]) {
+          acc[fecha].recetas[key] = { nombre, sinAzucar, cantidad: 0 }
+        }
+        acc[fecha].recetas[key].cantidad += cantidad
       });
       return acc;
     }, {});
@@ -72,16 +77,22 @@ const pedidosSeleccionados = pedidos.filter(p => seleccionados.has(p.id));
   }
 
   // Estructura: { saborKey: { sabor: string, total: number, tamaños: { [size]: number } } }
-  const saboresSeleccionados = pedidosSeleccionados.reduce((acc, pedido) => {
+const saboresSeleccionados = pedidosSeleccionados.reduce((acc, pedido) => {
     pedido.items?.forEach(it => {
       const sabor = limpiarNombre(it.nombre);
-      const key = it.recetaId || sabor; // unifica items con mismo recetaId aunque difiera el nombre
+      const key = it.recetaId || sabor;
       const cantidad = Number(it.cantidad || it.quantity || 0);
       const size = it.size || 'sin especificar';
+      const sinAzucar = !!it.sinAzucar;
 
       if (!acc[key]) acc[key] = { sabor, total: 0, tamaños: {} };
       acc[key].total += cantidad;
-      acc[key].tamaños[size] = (acc[key].tamaños[size] || 0) + cantidad;
+      if (!acc[key].tamaños[size]) acc[key].tamaños[size] = { normal: 0, sinAzucar: 0 };
+      if (sinAzucar) {
+        acc[key].tamaños[size].sinAzucar += cantidad;
+      } else {
+        acc[key].tamaños[size].normal += cantidad;
+      }
     });
     return acc;
   }, {});
@@ -163,7 +174,7 @@ const pedidosSeleccionados = pedidos.filter(p => seleccionados.has(p.id));
           <div className={styles.hornadasGrid}>
             {hornadasOrdenadas.map(([fecha, data]) => {
               const totalUnidades = Object.values(data.recetas).reduce(
-                (a, b) => a + b,
+                (a, r) => a + r.cantidad,
                 0,
               );
               return (
@@ -178,11 +189,11 @@ const pedidosSeleccionados = pedidos.filter(p => seleccionados.has(p.id));
                       u.
                     </span>
                   </div>
-                  <ul className={styles.hornadaRecetas}>
-                    {Object.entries(data.recetas).map(([nombre, cantidad]) => (
-                      <li key={nombre} className={styles.hornadaRecetaRow}>
-                        <span>{nombre}</span>
-                        <strong>{cantidad} u.</strong>
+                   <ul className={styles.hornadaRecetas}>
+                    {Object.entries(data.recetas).map(([key, r]) => (
+                      <li key={key} className={styles.hornadaRecetaRow}>
+                        <span>{r.sinAzucar ? '🚫🍬 ' : ''}{r.nombre}</span>
+                        <strong>{r.cantidad} u.</strong>
                       </li>
                     ))}
                   </ul>
@@ -239,25 +250,47 @@ const pedidosSeleccionados = pedidos.filter(p => seleccionados.has(p.id));
                     🧁 {sabor}
                   </span>
                 </div>
-                <ul className={styles.hornadaSelTamaños}>
-                  {ordenarTamaños(tamaños).map(([size, cantidad]) => (
-                    <li key={size} className={styles.hornadaSelTamañoRow}>
-                      <span className={styles.hornadaSelTamañoCantidad}>
-                        {cantidad}
-                      </span>
-                      <span className={styles.hornadaSelTamañoNombre}>
-                        {size}
-                      </span>
-                      <button
-                        className={styles.hornadaSelCrearBtn}
-                        onClick={() =>
-                          abrirDesdeSeleccion(sabor, size, cantidad)
-                        }
-                      >
-                        Crear partida
-                      </button>
-                    </li>
-                  ))}
+                 <ul className={styles.hornadaSelTamaños}>
+                  {ordenarTamaños(tamaños).flatMap(([size, counts]) => {
+                    const filas = [];
+                    if (counts.normal > 0) {
+                      filas.push(
+                        <li key={`${size}-normal`} className={styles.hornadaSelTamañoRow}>
+                          <span className={styles.hornadaSelTamañoCantidad}>
+                            {counts.normal}
+                          </span>
+                          <span className={styles.hornadaSelTamañoNombre}>
+                            {size}
+                          </span>
+                          <button
+                            className={styles.hornadaSelCrearBtn}
+                            onClick={() => abrirDesdeSeleccion(sabor, size, counts.normal)}
+                          >
+                            Crear partida
+                          </button>
+                        </li>
+                      );
+                    }
+                    if (counts.sinAzucar > 0) {
+                      filas.push(
+                        <li key={`${size}-sa`} className={styles.hornadaSelTamañoRow}>
+                          <span className={styles.hornadaSelTamañoCantidad}>
+                            {counts.sinAzucar}
+                          </span>
+                          <span className={styles.hornadaSelTamañoNombre}>
+                            🚫🍬 {size} sin azúcar
+                          </span>
+                          <button
+                            className={styles.hornadaSelCrearBtn}
+                            onClick={() => abrirDesdeSeleccion(sabor, size, counts.sinAzucar)}
+                          >
+                            Crear partida
+                          </button>
+                        </li>
+                      );
+                    }
+                    return filas;
+                  })}
                 </ul>
               </li>
             ))}
