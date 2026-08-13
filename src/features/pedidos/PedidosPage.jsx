@@ -121,7 +121,10 @@ export default function PedidosPage() {
           }
         })
 
-        // Si ningún item matcheó con una receta, no escribimos nada.
+         // Si ningún item matcheó con una receta, marcamos el pedido para
+        // mostrar un aviso visible en la card en vez de solo loguearlo.
+        // Se escribe una sola vez (si ya estaba marcado, no repetimos el
+        // write) para no generar un loop de escrituras a Firestore.
         const tieneAlgunMatch = itemsActualizados.some(
           (it) => it.costoPorUnidad > 0
         )
@@ -130,6 +133,9 @@ export default function PedidosPage() {
             `[Pedidos] Sin match de recetas para ${pedido.cliente} (${pedido.id}). Items:`,
             pedido.items.map((it) => it.nombre)
           )
+          if (!pedido.costeoSinMatch) {
+            await editarPedido(pedido.id, { costeoSinMatch: true })
+          }
           return
         }
 
@@ -151,6 +157,7 @@ export default function PedidosPage() {
           totalCosto,
           totalGanancia,
           margen,
+          costeoSinMatch: false,
         })
       } catch (err) {
         console.error(
@@ -195,6 +202,7 @@ export default function PedidosPage() {
         totalCosto,
         totalGanancia,
         margen,
+        costeoSinMatch: false,
       })
     } catch (err) {
       console.error('Error al calcular costos:', err)
@@ -428,6 +436,11 @@ export default function PedidosPage() {
                         <strong>{(pedido.margen ?? 0).toFixed(1)}%</strong>
                       </div>
                     </>
+                  ) : pedido.costeoSinMatch ? (
+                    <div className={styles.totalRow}>
+                      <span>⚠️ Sin receta asociada</span>
+                      <strong className={styles.negativo}>Revisar nombre</strong>
+                    </div>
                   ) : (
                     <div className={styles.totalRow}>
                       <span>Ganancia / Margen</span>
