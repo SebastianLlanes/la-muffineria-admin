@@ -12,6 +12,13 @@ const CAMPOS = [
   { key: 'umbralDescuento',             label: 'Unidades mínimas para descuento',   group: 'Descuento' },
 ]
 
+const CAMPOS_OVERRIDE = [
+  { key: 'precioNormalGrande',     label: 'Normal grande' },
+  { key: 'precioDescuentoGrande',  label: 'Descuento grande' },
+  { key: 'precioNormalMediano',    label: 'Normal mediano' },
+  { key: 'precioDescuentoMediano', label: 'Descuento mediano' },
+]
+
 const GRUPOS = [...new Set(CAMPOS.map(c => c.group))]
 
 export default function ConfigPage() {
@@ -20,11 +27,13 @@ export default function ConfigPage() {
   const [loading, setLoading]   = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [guardado, setGuardado] = useState(false)
+  const [nuevoProductId, setNuevoProductId] = useState('')
 
   useEffect(function suscribir() {
     const unsub = suscribirPrecios(function (data) {
-      setValores(data)
-      setForm(data)
+      const conDefaults = { overridesPorProducto: {}, ...data }
+      setValores(conDefaults)
+      setForm(conDefaults)
       setLoading(false)
     })
     return unsub
@@ -32,6 +41,40 @@ export default function ConfigPage() {
 
   function handleChange(key, value) {
     setForm(prev => ({ ...prev, [key]: Number(value) }))
+    setGuardado(false)
+  }
+
+  function handleOverrideChange(productId, campo, valor) {
+    setForm(prev => ({
+      ...prev,
+      overridesPorProducto: {
+        ...prev.overridesPorProducto,
+        [productId]: { ...prev.overridesPorProducto[productId], [campo]: Number(valor) },
+      },
+    }))
+    setGuardado(false)
+  }
+
+  function agregarOverride() {
+    const id = nuevoProductId.trim()
+    if (!id || form.overridesPorProducto[id]) return
+    setForm(prev => ({
+      ...prev,
+      overridesPorProducto: {
+        ...prev.overridesPorProducto,
+        [id]: { precioNormalGrande: 0, precioDescuentoGrande: 0, precioNormalMediano: 0, precioDescuentoMediano: 0 },
+      },
+    }))
+    setNuevoProductId('')
+    setGuardado(false)
+  }
+
+  function eliminarOverride(productId) {
+    setForm(prev => {
+      const copia = { ...prev.overridesPorProducto }
+      delete copia[productId]
+      return { ...prev, overridesPorProducto: copia }
+    })
     setGuardado(false)
   }
 
@@ -131,6 +174,68 @@ export default function ConfigPage() {
           </div>
         </div>
       ))}
+
+      <div className={styles.seccion}>
+        <h3 className={styles.seccionTitle}>
+          Precios especiales por producto
+        </h3>
+        <p className={styles.subtitle}>
+          Para sabores con costo distinto al resto (ej. Carrot Cake). Un campo en 0 usa el precio global de esa fila.
+        </p>
+
+        {Object.entries(form.overridesPorProducto).map(
+          ([productId, valoresOverride]) => (
+            <div key={productId} className={styles.campo}>
+              <div className={styles.topBar}>
+                <strong>{productId}</strong>
+                <button
+                  type="button"
+                  className={styles.resetBtn}
+                  onClick={() => eliminarOverride(productId)}
+                >
+                  Eliminar
+                </button>
+              </div>
+              <div className={styles.grid}>
+                {CAMPOS_OVERRIDE.map(({ key, label }) => (
+                  <div key={key} className={styles.campo}>
+                    <label className={styles.label}>{label}</label>
+                    <div className={styles.inputWrapper}>
+                      <span className={styles.prefix}>$</span>
+                      <input
+                        className={styles.input}
+                        type="number"
+                        min="0"
+                        value={valoresOverride[key] ?? 0}
+                        onChange={(e) =>
+                          handleOverrideChange(productId, key, e.target.value)
+                        }
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ),
+        )}
+
+        <div className={styles.topBar}>
+          <input
+            className={styles.input}
+            type="text"
+            placeholder="ID del producto (ej. muf-006)"
+            value={nuevoProductId}
+            onChange={(e) => setNuevoProductId(e.target.value)}
+          />
+          <button
+            type="button"
+            className={styles.saveBtn}
+            onClick={agregarOverride}
+          >
+            + Agregar producto
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
