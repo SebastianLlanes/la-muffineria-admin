@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRecetas } from '../../../contexts/RecetasContext'
 import { useIngredientes } from '../../../contexts/IngredientesContext'
 import { agregarPedido, editarPedido } from '../../../firebase/pedidosService'
+import { calcularCostosReceta } from '../../../utils/costosReceta'
 import styles from './PedidoForm.module.css'
 
 const hoy = () => new Date().toISOString().split('T')[0]
@@ -82,10 +83,15 @@ export default function PedidoForm({ item, onClose }) {
     }));
   }
 
+  function costoPorTamano(receta, size) {
+  const costos = calcularCostosReceta(receta, ingredientes)
+  return size === 'mediano' ? costos.costoPorUnidadMediano : costos.costoPorUnidad
+}
+
   function handleItemChange(index, field, value) {
     const updated = [...form.items];
 
-    if (field === 'recetaId') {
+       if (field === 'recetaId') {
       const receta = recetas.find(r => r.id === value)
       if (receta) {
         const size = updated[index].size || 'grande'
@@ -93,25 +99,18 @@ export default function PedidoForm({ item, onClose }) {
           ...updated[index],
           recetaId: receta.id,
           nombre: receta.nombre,
-          costoPorUnidad: size === 'mediano' && receta.costoPorUnidadMediano != null
-            ? receta.costoPorUnidadMediano
-            : receta.costoPorUnidad || 0,
+          costoPorUnidad: costoPorTamano(receta, size),
           precioUnitario: updated[index].precioUnitario,
           cantidad: updated[index].cantidad,
           size,
         }
       }
     } else if (field === 'size') {
-      // Al cambiar size, recalcular costoPorUnidad desde la receta
       const receta = recetas.find(r => r.id === updated[index].recetaId)
       updated[index] = {
         ...updated[index],
         size: value,
-        costoPorUnidad: receta
-          ? (value === 'mediano' && receta.costoPorUnidadMediano != null
-              ? receta.costoPorUnidadMediano
-              : receta.costoPorUnidad || 0)
-          : updated[index].costoPorUnidad,
+        costoPorUnidad: receta ? costoPorTamano(receta, value) : updated[index].costoPorUnidad,
       }
     } else {
       updated[index] = { ...updated[index], [field]: value }

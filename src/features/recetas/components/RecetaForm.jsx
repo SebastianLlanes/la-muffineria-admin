@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useIngredientes } from '../../../contexts/IngredientesContext'
 import { agregarReceta, editarReceta } from '../../../firebase/recetasService'
+import { calcularCostosReceta } from '../../../utils/costosReceta'
 import styles from './RecetaForm.module.css'
 
 const vacía = {
@@ -68,26 +69,13 @@ export default function RecetaForm({ item, onClose }) {
   }
 
   // Costos indirectos del contexto
-  const costosIndirectos = ingredientes
-    .filter(i => i.tipo === 'costo_indirecto')
-    .reduce((acc, i) => acc + i.costoUnitario, 0)
-
-  const costoIngredientes = form.ingredientes.reduce((acc, ing) => {
-    const cantidad = parseFloat(ing.cantidad) || 0
-    return acc + (cantidad * ing.costoUnitario)
-  }, 0)
-
   const rendimiento = parseInt(form.rendimiento) || 0
-  const costoIndirectoTotal = costosIndirectos * rendimiento
-  const costoTotal = costoIngredientes + costoIndirectoTotal
-  const costoPorUnidad = rendimiento > 0 ? costoTotal / rendimiento : 0
-
-  // Costo mediano derivado por proporción de gramaje.
-  // Ej: mediano 90g = grande 160g × (90/160) = 56.25% del costo del grande
   const gramosGrande = parseInt(form.gramosGrande) || 160
   const gramosMediano = parseInt(form.gramosMediano) || 100
   const factorMediano = gramosGrande > 0 ? gramosMediano / gramosGrande : 0
-  const costoPorUnidadMediano = costoPorUnidad * factorMediano
+
+  const { costoIngredientes, costoIndirectoTotal, costoTotal, costoPorUnidad, costoPorUnidadMediano } =
+    calcularCostosReceta(form, ingredientes)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -134,10 +122,12 @@ export default function RecetaForm({ item, onClose }) {
 
   return (
     <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h3>{item ? 'Editar receta' : 'Nueva receta'}</h3>
-          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+          <h3>{item ? "Editar receta" : "Nueva receta"}</h3>
+          <button className={styles.closeBtn} onClick={onClose}>
+            ✕
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -228,7 +218,9 @@ export default function RecetaForm({ item, onClose }) {
             </div>
 
             {form.ingredientes.length === 0 && (
-              <p className={styles.hint}>Todavía no hay ingredientes en esta receta.</p>
+              <p className={styles.hint}>
+                Todavía no hay ingredientes en esta receta.
+              </p>
             )}
 
             {form.ingredientes.map((ing, index) => (
@@ -236,11 +228,19 @@ export default function RecetaForm({ item, onClose }) {
                 <select
                   className={styles.ingSelect}
                   value={ing.ingredienteId}
-                  onChange={e => handleIngredienteChange(index, 'ingredienteId', e.target.value)}
+                  onChange={(e) =>
+                    handleIngredienteChange(
+                      index,
+                      "ingredienteId",
+                      e.target.value,
+                    )
+                  }
                 >
                   <option value="">Seleccionar...</option>
-                  {soloIngredientes.map(i => (
-                    <option key={i.id} value={i.id}>{i.nombre}</option>
+                  {soloIngredientes.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.nombre}
+                    </option>
                   ))}
                 </select>
 
@@ -251,13 +251,20 @@ export default function RecetaForm({ item, onClose }) {
                   step="0.01"
                   placeholder="Cantidad"
                   value={ing.cantidad}
-                  onChange={e => handleIngredienteChange(index, 'cantidad', e.target.value)}
+                  onChange={(e) =>
+                    handleIngredienteChange(index, "cantidad", e.target.value)
+                  }
                 />
 
-                <span className={styles.ingUnidad}>{ing.unidad || '—'}</span>
+                <span className={styles.ingUnidad}>{ing.unidad || "—"}</span>
 
                 <span className={styles.ingCosto}>
-                  ${((parseFloat(ing.cantidad) || 0) * ing.costoUnitario).toFixed(2)}
+                  $
+                  {(
+                    (parseFloat(ing.cantidad) || 0) *
+                    (soloIngredientes.find((i) => i.id === ing.ingredienteId)
+                      ?.costoUnitario ?? ing.costoUnitario)
+                  ).toFixed(2)}
                 </span>
 
                 <button
@@ -278,14 +285,19 @@ export default function RecetaForm({ item, onClose }) {
                 <strong>${costoIngredientes.toFixed(2)}</strong>
               </div>
               <div className={styles.resumenRow}>
-                <span>Costos indirectos ({rendimiento} u. × ${costosIndirectos.toFixed(2)})</span>
+                <span>
+                  Costos indirectos ({rendimiento} u. × $
+                  {costosIndirectos.toFixed(2)})
+                </span>
                 <strong>${costoIndirectoTotal.toFixed(2)}</strong>
               </div>
               <div className={`${styles.resumenRow} ${styles.resumenTotal}`}>
                 <span>Costo total</span>
                 <strong>${costoTotal.toFixed(2)}</strong>
               </div>
-              <div className={`${styles.resumenRow} ${styles.resumenDestacado}`}>
+              <div
+                className={`${styles.resumenRow} ${styles.resumenDestacado}`}
+              >
                 <span>Costo por unidad (grande, {gramosGrande}g)</span>
                 <strong>${costoPorUnidad.toFixed(2)}</strong>
               </div>
@@ -299,15 +311,23 @@ export default function RecetaForm({ item, onClose }) {
           {error && <p className={styles.error}>{error}</p>}
 
           <div className={styles.actions}>
-            <button type="button" className={styles.cancelBtn} onClick={onClose}>
+            <button
+              type="button"
+              className={styles.cancelBtn}
+              onClick={onClose}
+            >
               Cancelar
             </button>
-            <button type="submit" className={styles.saveBtn} disabled={guardando}>
-              {guardando ? 'Guardando...' : 'Guardar'}
+            <button
+              type="submit"
+              className={styles.saveBtn}
+              disabled={guardando}
+            >
+              {guardando ? "Guardando..." : "Guardar"}
             </button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }
