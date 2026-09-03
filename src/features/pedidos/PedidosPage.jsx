@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { usePedidos } from '../../contexts/PedidosContext'
 import { useRecetas } from '../../contexts/RecetasContext'
-import { useIngredientes } from '../../contexts/IngredientesContext'
 import { eliminarPedido, actualizarEstado, editarPedido } from '../../firebase/pedidosService'
 import PedidoForm from './components/PedidoForm'
 import styles from './PedidosPage.module.css'
@@ -77,13 +76,8 @@ export default function PedidosPage() {
   const [busquedaFecha, setBusquedaFecha] = useState('')
 
    const { recetas } = useRecetas()
-  const { ingredientes } = useIngredientes()
   const [calculando, setCalculando] = useState(null) 
   const autoCalculandoRef = useRef(new Set()) 
-
-  const costosIndirectosPorUnidad = ingredientes
-    .filter((i) => i.tipo === 'costo_indirecto')
-    .reduce((acc, i) => acc + i.costoUnitario, 0)
 
   // Cálculo automático de ganancia/margen para pedidos web sin costos.
   // Se dispara cuando llegan pedidos o cambian las recetas. El filtro por
@@ -143,8 +137,7 @@ export default function PedidosPage() {
         const totalCosto = itemsActualizados.reduce(
           (acc, it) =>
             acc +
-            (it.cantidad ?? it.quantity ?? 0) *
-              (it.costoPorUnidad + costosIndirectosPorUnidad),
+            (it.cantidad ?? it.quantity ?? 0) * it.costoPorUnidad,
           0
         )
         const totalGanancia = totalVenta - totalCosto
@@ -168,7 +161,7 @@ export default function PedidosPage() {
         autoCalculandoRef.current.delete(pedido.id)
       }
     })
-  }, [pedidos, recetas, costosIndirectosPorUnidad])
+  }, [pedidos, recetas])
 
   async function calcularCostos(pedido) {
     setCalculando(pedido.id)
@@ -190,7 +183,7 @@ export default function PedidosPage() {
 
       const totalVenta    = pedido.totalVenta ?? pedido.total ?? 0
       const totalCosto    = itemsActualizados.reduce(
-        (acc, it) => acc + (it.cantidad ?? it.quantity ?? 0) * (it.costoPorUnidad + costosIndirectosPorUnidad),
+        (acc, it) => acc + (it.cantidad ?? it.quantity ?? 0) * it.costoPorUnidad,
         0
       )
       const totalGanancia = totalVenta - totalCosto
