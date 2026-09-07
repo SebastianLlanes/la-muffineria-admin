@@ -74,7 +74,7 @@ export default function RecetaForm({ item, onClose }) {
   const gramosMediano = parseInt(form.gramosMediano) || 100
   const factorMediano = gramosGrande > 0 ? gramosMediano / gramosGrande : 0
 
-  const { costoIngredientes, costoIndirectoTotal, costoTotal, costoPorUnidad, costoPorUnidadMediano } =
+  const { costosIndirectos, costoIngredientes, costoIndirectoTotal, costoTotal, costoPorUnidad, costoPorUnidadMediano } =
     calcularCostosReceta(form, ingredientes)
 
   async function handleSubmit(e) {

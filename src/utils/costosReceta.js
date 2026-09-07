@@ -23,5 +23,5 @@ export function calcularCostosReceta(receta, ingredientesActuales) {
   const factorMediano = gramosGrande > 0 ? gramosMediano / gramosGrande : 0
   const costoPorUnidadMediano = costoPorUnidad * factorMediano
 
-  return { costoIngredientes, costoIndirectoTotal, costoTotal, costoPorUnidad, costoPorUnidadMediano }
+  return { costosIndirectos, costoIngredientes, costoIndirectoTotal, costoTotal, costoPorUnidad, costoPorUnidadMediano }
 }
