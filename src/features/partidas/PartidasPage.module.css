@@ -509,3 +509,10 @@
     width: 100%;
   }
 }
+
+.hornadaSelAcciones {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}

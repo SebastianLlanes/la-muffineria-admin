@@ -30,6 +30,8 @@ export default function PartidasPage() {
   const [seleccionados, setSeleccionados] = useState(new Set());
   const [precargarPartida, setPrecargarPartida] = useState(null);
 
+  const [copiado, setCopiado] = useState(false);
+
   // Agrupar pedidos activos por fechaEntrega para planificar hornadas
   const hornadas = pedidos
     .filter(
@@ -115,6 +117,47 @@ const saboresSeleccionados = pedidosSeleccionados.reduce((acc, pedido) => {
     a.sabor.localeCompare(b.sabor),
   );
 
+    function generarTextoWhatsApp() {
+    const totalesPorTamaño = {};
+
+    const bloques = saboresOrdenados.map(({ sabor, total, tamaños }) => {
+      const lineas = [`*${sabor}* — ${total}`];
+      ordenarTamaños(tamaños).forEach(([size, counts]) => {
+        totalesPorTamaño[size] = (totalesPorTamaño[size] || 0) + counts.normal + counts.sinAzucar;
+        if (counts.normal > 0) lineas.push(`   • ${counts.normal} ${size}`);
+        if (counts.sinAzucar > 0) lineas.push(`   • 🚫🍬 ${counts.sinAzucar} ${size} sin azúcar`);
+      });
+      return lineas.join('\n');
+    });
+
+    const totalUnidades = saboresOrdenados.reduce((a, s) => a + s.total, 0);
+    const resumenTamaños = ordenarTamaños(totalesPorTamaño)
+      .map(([size, cant]) => `${size}: ${cant}`)
+      .join(' · ');
+    const n = pedidosSeleccionados.length;
+
+    return [
+      `🍳 *HORNEADA* — ${n} pedido${n !== 1 ? 's' : ''}`,
+      '',
+      bloques.join('\n\n'),
+      '',
+      '━━━━━━━━━━',
+      `*Total: ${totalUnidades} u.*`,
+      resumenTamaños,
+    ].join('\n');
+  }
+
+  async function handleCopiarWhatsApp() {
+    try {
+      await navigator.clipboard.writeText(generarTextoWhatsApp());
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch (err) {
+      console.error('No se pudo copiar el resumen:', err);
+      alert('No se pudo copiar el resumen. Probá de nuevo.');
+    }
+  }
+
 
   function abrirNueva() {
     setItemEditar(null);
@@ -189,10 +232,13 @@ const saboresSeleccionados = pedidosSeleccionados.reduce((acc, pedido) => {
                       u.
                     </span>
                   </div>
-                   <ul className={styles.hornadaRecetas}>
+                  <ul className={styles.hornadaRecetas}>
                     {Object.entries(data.recetas).map(([key, r]) => (
                       <li key={key} className={styles.hornadaRecetaRow}>
-                        <span>{r.sinAzucar ? '🚫🍬 ' : ''}{r.nombre}</span>
+                        <span>
+                          {r.sinAzucar ? "🚫🍬 " : ""}
+                          {r.nombre}
+                        </span>
                         <strong>{r.cantidad} u.</strong>
                       </li>
                     ))}
@@ -232,12 +278,20 @@ const saboresSeleccionados = pedidosSeleccionados.reduce((acc, pedido) => {
                 fechas
               </p>
             </div>
-            <button
-              className={styles.hornadaSelLimpiar}
-              onClick={() => setSeleccionados(new Set())}
-            >
-              Limpiar selección
-            </button>
+            <div className={styles.hornadaSelAcciones}>
+              <button
+                className={styles.hornadaSelLimpiar}
+                onClick={handleCopiarWhatsApp}
+              >
+                {copiado ? "✓ Copiado" : "📋 Copiar para WhatsApp"}
+              </button>
+              <button
+                className={styles.hornadaSelLimpiar}
+                onClick={() => setSeleccionados(new Set())}
+              >
+                Limpiar selección
+              </button>
+            </div>
           </div>
           <ul className={styles.hornadaSelSabores}>
             {saboresOrdenados.map(({ sabor, total, tamaños }) => (
@@ -250,12 +304,15 @@ const saboresSeleccionados = pedidosSeleccionados.reduce((acc, pedido) => {
                     🧁 {sabor}
                   </span>
                 </div>
-                 <ul className={styles.hornadaSelTamaños}>
+                <ul className={styles.hornadaSelTamaños}>
                   {ordenarTamaños(tamaños).flatMap(([size, counts]) => {
                     const filas = [];
                     if (counts.normal > 0) {
                       filas.push(
-                        <li key={`${size}-normal`} className={styles.hornadaSelTamañoRow}>
+                        <li
+                          key={`${size}-normal`}
+                          className={styles.hornadaSelTamañoRow}
+                        >
                           <span className={styles.hornadaSelTamañoCantidad}>
                             {counts.normal}
                           </span>
@@ -264,16 +321,21 @@ const saboresSeleccionados = pedidosSeleccionados.reduce((acc, pedido) => {
                           </span>
                           <button
                             className={styles.hornadaSelCrearBtn}
-                            onClick={() => abrirDesdeSeleccion(sabor, size, counts.normal)}
+                            onClick={() =>
+                              abrirDesdeSeleccion(sabor, size, counts.normal)
+                            }
                           >
                             Crear partida
                           </button>
-                        </li>
+                        </li>,
                       );
                     }
                     if (counts.sinAzucar > 0) {
                       filas.push(
-                        <li key={`${size}-sa`} className={styles.hornadaSelTamañoRow}>
+                        <li
+                          key={`${size}-sa`}
+                          className={styles.hornadaSelTamañoRow}
+                        >
                           <span className={styles.hornadaSelTamañoCantidad}>
                             {counts.sinAzucar}
                           </span>
@@ -282,11 +344,13 @@ const saboresSeleccionados = pedidosSeleccionados.reduce((acc, pedido) => {
                           </span>
                           <button
                             className={styles.hornadaSelCrearBtn}
-                            onClick={() => abrirDesdeSeleccion(sabor, size, counts.sinAzucar)}
+                            onClick={() =>
+                              abrirDesdeSeleccion(sabor, size, counts.sinAzucar)
+                            }
                           >
                             Crear partida
                           </button>
-                        </li>
+                        </li>,
                       );
                     }
                     return filas;
